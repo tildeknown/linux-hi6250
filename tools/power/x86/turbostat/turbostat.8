@@ -165,6 +165,10 @@ The system configuration dump (if --quiet is not used) is followed by statistics
 .PP
 \fBLLC%hit\fP Last Level Cache Hit Rate %.  Hit Rate Percent = 100.0 * (References - Misses)/References.  The system summary row shows the weighted average for all CPUs (100.0 * (Sum_References - Sum_Misses)/Sum_References).
 .PP
+\fBL2MRPS\fP Level-2 Cache Cache Millions of References Per Second.  For CPUs with an L2 LLC, this is the same as LLC references.  The system summary row shows the sum for all CPUs.  In both cases, the value displayed is the actual value divided by 1,000,000.  If this value is large, then the L2%hit column is significant.  If this value is small, then the L2%hit column is not significant.
+.PP
+\fBL2%hit\fP Level-2 Cache Hit Rate %.  Hit Rate Percent = 100.0 * (References - Misses)/References.  The system summary row shows the weighted average for all CPUs (100.0 * (Sum_References - Sum_Misses)/Sum_References).
+.PP
 \fBC1, C2, C3...\fP The number times Linux requested the C1, C2, C3 idle state during the measurement interval.  The system summary line shows the sum for all CPUs.  These are C-state names as exported in /sys/devices/system/cpu/cpu*/cpuidle/state*/name.  While their names are generic, their attributes are processor specific. They the system description section of output shows what MWAIT sub-states they are mapped to on each system.  These counters are in the "cpuidle" group, which is disabled, by default.
 .PP
 \fBC1+, C2+, C3+...\fP The idle governor idle state misprediction statistics. Inidcates the number times Linux requested the C1, C2, C3 idle state during the measurement interval, but should have requested a deeper idle state (if it exists and enabled). These statistics come from the /sys/devices/system/cpu/cpu*/cpuidle/state*/below file.  These counters are in the "cpuidle" group, which is disabled, by default.
