@@ -1664,6 +1664,7 @@ static void rnbd_destroy_sysfs(struct rnbd_clt_dev *dev,
 			/* To avoid deadlock firstly remove itself */
 			sysfs_remove_file_self(&dev->kobj, sysfs_self);
 		kobject_del(&dev->kobj);
+		kobject_put(&dev->kobj);
 	}
 }
 
