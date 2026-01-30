@@ -206,7 +206,7 @@ int main(int argc, char **argv)
 	bool raw_sig = false;
 	unsigned char buf[4096];
 	unsigned long module_size, sig_size;
-	unsigned int use_signed_attrs = PKCS7_NOATTR;
+	unsigned int use_signed_attrs = CMS_NOATTR;
 	const EVP_MD *digest_algo;
 	EVP_PKEY *private_key;
 	CMS_ContentInfo *cms = NULL;
