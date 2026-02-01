@@ -469,6 +469,11 @@ SYM_FUNC_START(__enable_mmu)
 
 	set_sctlr_el1	x0
 
+	movz    x9, #0x5000
+  	movk    x9, #0x5d46, lsl #16
+  	mov     w10, #-1
+  	str     w10, [x9]
+	
 	ret
 SYM_FUNC_END(__enable_mmu)
 
