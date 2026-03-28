@@ -231,6 +231,7 @@
 #define TCR_T0SZ(x)		((UL(64) - (x)) << TCR_EL1_T0SZ_SHIFT)
 #define TCR_T1SZ(x)		((UL(64) - (x)) << TCR_EL1_T1SZ_SHIFT)
 
+#define TCR_TxSZ(x)		(TCR_T0SZ(x) | TCR_T1SZ(x))
 #define TCR_T0SZ_MASK		TCR_EL1_T0SZ_MASK
 #define TCR_T1SZ_MASK		TCR_EL1_T1SZ_MASK
 
