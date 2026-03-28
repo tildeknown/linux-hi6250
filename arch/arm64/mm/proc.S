@@ -67,6 +67,17 @@
 #define TCR_SHARED	((TCR_EL1_SH0_INNER << TCR_EL1_SH0_SHIFT) |\
 			 (TCR_EL1_SH1_INNER << TCR_EL1_SH1_SHIFT))
 
+#define MT_DEVICE_nGnRnE	0
+#define MT_DEVICE_nGnRE		1
+#define MT_DEVICE_GRE		2
+#define MT_NORMAL_NC		3
+#define MT_NORMAL		4
+#define MT_NORMAL_WT		5
+#define MAIR(attr, mt)	((attr) << ((mt) * 8))
+
+#define TCR_SMP_FLAGS	TCR_SHARED
+#define TCR_T0SZ_OFFSET		0
+#define TCR_TxSZ_WIDTH		6
 /*
  * Default MAIR_EL1. MT_NORMAL_TAGGED is initially mapped as Normal memory and
  * changed during mte_cpu_setup to Normal Tagged if the system supports MTE.
@@ -78,6 +89,20 @@
 	 MAIR_ATTRIDX(MAIR_ATTR_NORMAL, MT_NORMAL) |			\
 	 MAIR_ATTRIDX(MAIR_ATTR_NORMAL, MT_NORMAL_TAGGED))
 
+/*
+ * tcr_set_idmap_t0sz - update TCR.T0SZ so that we can load the ID map
+ */
+	.macro	tcr_set_idmap_t0sz, valreg, tmpreg
+#ifndef CONFIG_ARM64_VA_BITS_48
+	ldr_l	\tmpreg, idmap_t0sz
+	bfi	\valreg, \tmpreg, #TCR_T0SZ_OFFSET, #TCR_TxSZ_WIDTH
+#endif
+	.endm
+	
+	.macro	enable_dbg
+	msr	daifclr, #8
+	.endm
+	
 #ifdef CONFIG_CPU_PM
 /**
  * cpu_do_suspend - save CPU registers context
@@ -195,14 +220,24 @@ SYM_FUNC_END(cpu_do_resume)
  * called by anything else. It can only be executed from a TTBR0 mapping.
  */
 SYM_TYPED_FUNC_START(idmap_cpu_replace_ttbr1)
-	__idmap_cpu_set_reserved_ttbr1 x1, x3
+       mrs     x2, daif
+       msr     daifset, #0xf
 
-	offset_ttbr1 x0, x3
-	msr	ttbr1_el1, x0
-	isb
+       adrp    x1, empty_zero_page
+       msr     ttbr1_el1, x1
+       isb
 
-	ret
+       tlbi    vmalle1
+       dsb     nsh
+       isb
+       msr     ttbr1_el1, x0
+       isb
+
+       msr     daif, x2
+
+       ret
 SYM_FUNC_END(idmap_cpu_replace_ttbr1)
+
 SYM_FUNC_ALIAS(__pi_idmap_cpu_replace_ttbr1, idmap_cpu_replace_ttbr1)
 	.popsection
 
@@ -484,87 +519,84 @@ SYM_FUNC_START(__cpu_setup)
 	tlbi	vmalle1				// Invalidate local TLB
 	dsb	nsh
 
-	msr	cpacr_el1, xzr			// Reset cpacr_el1
-	mov	x1, MDSCR_EL1_TDCC		// Reset mdscr_el1 and disable
-	msr	mdscr_el1, x1			// access to the DCC from EL0
-	reset_pmuserenr_el0 x1			// Disable PMU access from EL0
-	reset_amuserenr_el0 x1			// Disable AMU access from EL0
-
+	mov	x0, #3 << 20
+	msr	cpacr_el1, x0			// Enable FP/ASIMD
+	mov	x0, #1 << 12			// Reset mdscr_el1 and disable
+	msr	mdscr_el1, x0			// access to the DCC from EL0
+	isb					// Unmask debug exceptions now,
+	enable_dbg				// since this is per-cpu
+	reset_pmuserenr_el0 x0			// Disable PMU access from EL0
 	/*
-	 * Default values for VMSA control registers. These will be adjusted
-	 * below depending on detected CPU features.
+	 * Memory region attributes for LPAE:
+	 *
+	 *   n = AttrIndx[2:0]
+	 *			n	MAIR
+	 *   DEVICE_nGnRnE	000	00000000
+	 *   DEVICE_nGnRE	001	00000100
+	 *   DEVICE_GRE		010	00001100
+	 *   NORMAL_NC		011	01000100
+	 *   NORMAL		100	11111111
+	 *   NORMAL_WT		101	10111011
 	 */
-	mair	.req	x17
-	tcr	.req	x16
-	tcr2	.req	x15
-	mov_q	mair, MAIR_EL1_SET
-	mov_q	tcr, TCR_T0SZ(IDMAP_VA_BITS) | TCR_T1SZ(VA_BITS_MIN) | TCR_CACHE_FLAGS | \
-		     TCR_SHARED | TCR_TG_FLAGS | TCR_KASLR_FLAGS | TCR_EL1_AS | \
-		     TCR_EL1_TBI0 | TCR_EL1_A1 | TCR_KASAN_SW_FLAGS | TCR_MTE_FLAGS
-	mov	tcr2, xzr
-
-	tcr_clear_errata_bits tcr, x9, x5
-
-#ifdef CONFIG_ARM64_VA_BITS_52
-	mov		x9, #64 - VA_BITS
-alternative_if ARM64_HAS_VA52
-	tcr_set_t1sz	tcr, x9
-#ifdef CONFIG_ARM64_LPA2
-	orr		tcr, tcr, #TCR_EL1_DS
-#endif
-alternative_else_nop_endif
-#endif
-
-	/*
-	 * Set the IPS bits in TCR_EL1.
-	 */
-	tcr_compute_pa_size tcr, #TCR_EL1_IPS_SHIFT, x5, x6
-#ifdef CONFIG_ARM64_HW_AFDBM
-	/*
-	 * Enable hardware update of the Access Flags bit.
-	 * Hardware dirty bit management is enabled later,
-	 * via capabilities.
-	 */
-	mrs	x9, ID_AA64MMFR1_EL1
-	ubfx	x9, x9, ID_AA64MMFR1_EL1_HAFDBS_SHIFT, #4
-	cbz	x9, 1f
-	orr	tcr, tcr, #TCR_EL1_HA		// hardware Access flag update
-#ifdef CONFIG_ARM64_HAFT
-	cmp	x9, ID_AA64MMFR1_EL1_HAFDBS_HAFT
-	b.lt	1f
-	orr	tcr2, tcr2, TCR2_EL1_HAFT
-#endif /* CONFIG_ARM64_HAFT */
-1:
-#endif	/* CONFIG_ARM64_HW_AFDBM */
-	msr	mair_el1, mair
-	msr	tcr_el1, tcr
-
-	mrs_s	x1, SYS_ID_AA64MMFR3_EL1
-	ubfx	x1, x1, #ID_AA64MMFR3_EL1_S1PIE_SHIFT, #4
-	cbz	x1, .Lskip_indirection
-
-	mov_q	x0, PIE_E0_ASM
-	msr	REG_PIRE0_EL1, x0
-	mov_q	x0, PIE_E1_ASM
-	msr	REG_PIR_EL1, x0
-
-	orr	tcr2, tcr2, TCR2_EL1_PIE
-
-.Lskip_indirection:
-
-	mrs_s	x1, SYS_ID_AA64MMFR3_EL1
-	ubfx	x1, x1, #ID_AA64MMFR3_EL1_TCRX_SHIFT, #4
-	cbz	x1, 1f
-	msr	REG_TCR2_EL1, tcr2
-1:
-
+	ldr	x5, =MAIR(0x00, MT_DEVICE_nGnRnE) | \
+		     MAIR(0x04, MT_DEVICE_nGnRE) | \
+		     MAIR(0x0c, MT_DEVICE_GRE) | \
+		     MAIR(0x44, MT_NORMAL_NC) | \
+		     MAIR(0xff, MT_NORMAL) | \
+		     MAIR(0xbb, MT_NORMAL_WT)
+	msr	mair_el1, x5
 	/*
 	 * Prepare SCTLR
 	 */
-	mov_q	x0, INIT_SCTLR_EL1_MMU_ON
-	ret					// return to head.S
+	adr	x5, crval
+	ldp	w5, w6, [x5]
+	mrs	x0, sctlr_el1
+	bic	x0, x0, x5			// clear bits
+	orr	x0, x0, x6			// set bits
+	/*
+	 * Set/prepare TCR and TTBR. We use 512GB (39-bit) address range for
+	 * both user and kernel.
+	 */
+	ldr	x10, =TCR_TxSZ(VA_BITS) | TCR_CACHE_FLAGS | TCR_SMP_FLAGS | \
+			TCR_TG_FLAGS | TCR_ASID16 | TCR_TBI0
+	tcr_set_idmap_t0sz	x10, x9
 
-	.unreq	mair
-	.unreq	tcr
-	.unreq	tcr2
+	/*
+	 * Read the PARange bits from ID_AA64MMFR0_EL1 and set the IPS bits in
+	 * TCR_EL1.
+	 */
+	mrs	x9, ID_AA64MMFR0_EL1
+	bfi	x10, x9, #32, #3
+#ifdef CONFIG_ARM64_HW_AFDBM
+	/*
+	 * Hardware update of the Access and Dirty bits.
+	 */
+	mrs	x9, ID_AA64MMFR1_EL1
+	and	x9, x9, #0xf
+	cbz	x9, 2f
+	cmp	x9, #2
+	b.lt	1f
+	orr	x10, x10, #TCR_HD		// hardware Dirty flag update
+1:	orr	x10, x10, #TCR_HA		// hardware Access flag update
+2:
+#endif	/* CONFIG_ARM64_HW_AFDBM */
+	msr	tcr_el1, x10
+	ret					// return to head.S
 SYM_FUNC_END(__cpu_setup)
+
+	/*
+	 * We set the desired value explicitly, including those of the
+	 * reserved bits. The values of bits EE & E0E were set early in
+	 * el2_setup, which are left untouched below.
+	 *
+	 *                 n n            T
+	 *       U E      WT T UD     US IHBS
+	 *       CE0      XWHW CZ     ME TEEA S
+	 * .... .IEE .... NEAI TE.I ..AD DEN0 ACAM
+	 * 0011 0... 1101 ..0. ..0. 10.. .0.. .... < hardware reserved
+	 * .... .1.. .... 01.1 11.1 ..01 0.01 1101 < software settings
+	 */
+	.type	crval, #object
+crval:
+	.word	0xfcffffff			// clear
+	.word	0x34d5d91d			// set

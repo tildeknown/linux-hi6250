@@ -62,7 +62,7 @@ static bool rodata_is_rw __ro_after_init = true;
  * The booting CPU updates the failed status @__early_cpu_boot_status,
  * with MMU turned off.
  */
-long __section(".mmuoff.data.write") __early_cpu_boot_status;
+extern long __early_cpu_boot_status;
 
 /*
  * Empty_zero_page is a special page that is used for zero-initialized data
@@ -73,6 +73,8 @@ EXPORT_SYMBOL(empty_zero_page);
 
 static DEFINE_SPINLOCK(swapper_pgdir_lock);
 static DEFINE_MUTEX(fixmap_lock);
+
+u64 idmap_t0sz = TCR_T0SZ(VA_BITS);
 
 void noinstr set_swapper_pgd(pgd_t *pgdp, pgd_t pgd)
 {
