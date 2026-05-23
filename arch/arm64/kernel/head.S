@@ -468,6 +468,11 @@ SYM_FUNC_START(__enable_mmu)
 	load_ttbr1 x1, x1, x3
 	
 	set_sctlr_el1	x0
+	movz    x9, #0x5000
+  	movk    x9, #0x5d46, lsl #16
+  	mov     w10, #-1
+  	str     w10, [x9]
+
 
 	ret
 SYM_FUNC_END(__enable_mmu)
@@ -516,11 +521,6 @@ SYM_FUNC_START_LOCAL(__primary_switch)
 	mov	x0, x20				// pass the full boot status
 	mov	x1, x21				// pass the FDT
 	bl	__pi_early_map_kernel		// Map and relocate the kernel
-
-	movz    x9, #0x5000
-  	movk    x9, #0x5d46, lsl #16
-  	mov     w10, #-1
-  	str     w10, [x9]
 
 	ldr	x8, =__primary_switched
 	adrp	x0, KERNEL_START		// __pa(KERNEL_START)
