@@ -64,3 +64,71 @@
 
 	};
 };
+
+
+// enable pinmux
+&pmx0 {
+	status = "ok";
+};
+
+&pmx1 {
+	status = "ok";
+};
+
+&pmx2 {
+	status = "ok";
+};
+
+&pmx3 {
+	status = "ok";
+};
+
+// enable i2c2,4
+&i2c2 {
+	status = "ok";
+};
+
+&i2c4 {
+	status = "ok";
+};
+
+// enable dma
+&dma0 {
+	status = "ok";
+};
+
+&iomcu_dma {
+	status = "ok";
+};
+
+// enable uart0,2,3,4,6
+&uart0 {
+	status = "ok";
+};
+
+&uart2 {
+	status = "ok";
+};
+
+&uart3 {
+	status = "ok";
+};
+
+&uart4 {
+	status = "ok";
+};
+
+&uart6 {
+	status = "ok";
+};
+
+// enable pmic
+&pmic {
+	status = "ok";
+	pmic-gpios = <&gpio23 7 GPIO_ACTIVE_HIGH>;
+};
+
+&usb_otg {
+	status = "okay";
+	hisilicon,eye-diagram-param = <0x059066DB>;
+};

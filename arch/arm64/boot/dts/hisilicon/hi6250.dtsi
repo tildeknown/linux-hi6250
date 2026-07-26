@@ -1,21 +1,27 @@
 // SPDX-License-Identifier: GPL-2.0
-
+/*
+ * Device tree of Hisilicon Hi6250 SoC
+ *
+ * Copyright (C) 2025, Tildeguy (tildeguy@mainlining.org)
+ */
 
 #include <dt-bindings/interrupt-controller/arm-gic.h>
-#include <dt-bindings/thermal/thermal.h>
+#include <dt-bindings/clock/hi6250-clock.h>
+#include <dt-bindings/gpio/gpio.h>
 
 / {
 	compatible = "hisilicon,hi6250";
-
 	interrupt-parent = <&gic>;
 	#address-cells = <2>;
 	#size-cells = <2>;
 
 	psci {
-		compatible = "arm,psci";
+		compatible = "arm,psci-0.2";
 		method = "smc";
-		cpu_suspend = <0xc4000001>;
 		cpu_off = <0x84000002>;
+		system_off = <0x84000008>;
+		system_reset = <0x84000009>;
+		cpu_suspend = <0xc4000001>;
 		cpu_on = <0xc4000003>;
 	};
 
@@ -69,7 +75,7 @@
 			next-level-cache = <&CACHE0_L2>;
 			cpu-idle-states = <&CPU_SLEEP_0 &CLUSTER_SLEEP_0>;
 			/* capacity-dmips-mhz = <592>; */
-			/* clocks = <&stub_clock HI3660_CLK_STUB_CLUSTER0>; */
+			clocks = <&stub_clock HI6250_CLK_STUB_CLUSTER0>;
 			operating-points-v2 = <&cluster0_opp>;
 			#cooling-cells = <2>;
 			dynamic-power-coefficient = <110>;
@@ -83,7 +89,7 @@
 			next-level-cache = <&CACHE0_L2>;
 			cpu-idle-states = <&CPU_SLEEP_0 &CLUSTER_SLEEP_0>;
 			/* capacity-dmips-mhz = <592>; */
-			/* clocks = <&stub_clock HI3660_CLK_STUB_CLUSTER0>; */
+			clocks = <&stub_clock HI6250_CLK_STUB_CLUSTER0>;
 			operating-points-v2 = <&cluster0_opp>;
 			#cooling-cells = <2>;
 		};
@@ -96,7 +102,7 @@
 			next-level-cache = <&CACHE0_L2>;
 			cpu-idle-states = <&CPU_SLEEP_0 &CLUSTER_SLEEP_0>;
 			/* capacity-dmips-mhz = <592>; */
-			/* clocks = <&stub_clock HI3660_CLK_STUB_CLUSTER0>; */
+			clocks = <&stub_clock HI6250_CLK_STUB_CLUSTER0>;
 			operating-points-v2 = <&cluster0_opp>;
 			#cooling-cells = <2>;
 		};
@@ -109,7 +115,7 @@
 			next-level-cache = <&CACHE0_L2>;
 			cpu-idle-states = <&CPU_SLEEP_0 &CLUSTER_SLEEP_0>;
 			/* capacity-dmips-mhz = <592>; */
-			/* clocks = <&stub_clock HI3660_CLK_STUB_CLUSTER0>; */
+			clocks = <&stub_clock HI6250_CLK_STUB_CLUSTER0>;
 			operating-points-v2 = <&cluster0_opp>;
 			#cooling-cells = <2>;
 		};
@@ -122,7 +128,7 @@
 			next-level-cache = <&CACHE1_L2>;
 			cpu-idle-states = <&CPU_SLEEP_1 &CLUSTER_SLEEP_1>;
 			/* capacity-dmips-mhz = <1024>; */
-			/* clocks = <&stub_clock HI3660_CLK_STUB_CLUSTER1>; */
+			clocks = <&stub_clock HI6250_CLK_STUB_CLUSTER1>;
 			operating-points-v2 = <&cluster1_opp>;
 			#cooling-cells = <2>;
 			dynamic-power-coefficient = <550>;
@@ -136,7 +142,7 @@
 			next-level-cache = <&CACHE1_L2>;
 			cpu-idle-states = <&CPU_SLEEP_1 &CLUSTER_SLEEP_1>;
 			/* capacity-dmips-mhz = <1024>; */
-			/* clocks = <&stub_clock HI3660_CLK_STUB_CLUSTER1>; */
+			clocks = <&stub_clock HI6250_CLK_STUB_CLUSTER1>;
 			operating-points-v2 = <&cluster1_opp>;
 			#cooling-cells = <2>;
 		};
@@ -149,7 +155,7 @@
 			next-level-cache = <&CACHE1_L2>;
 			cpu-idle-states = <&CPU_SLEEP_1 &CLUSTER_SLEEP_1>;
 			/* capacity-dmips-mhz = <1024>; */
-			/* clocks = <&stub_clock HI3660_CLK_STUB_CLUSTER1>; */
+			clocks = <&stub_clock HI6250_CLK_STUB_CLUSTER1>;
 			operating-points-v2 = <&cluster1_opp>;
 			#cooling-cells = <2>;
 		};
@@ -162,7 +168,7 @@
 			next-level-cache = <&CACHE1_L2>;
 			cpu-idle-states = <&CPU_SLEEP_1 &CLUSTER_SLEEP_1>;
 			/* capacity-dmips-mhz = <1024>; */
-			/* clocks = <&stub_clock HI3660_CLK_STUB_CLUSTER1>; */
+			clocks = <&stub_clock HI6250_CLK_STUB_CLUSTER1>;
 			operating-points-v2 = <&cluster1_opp>;
 			#cooling-cells = <2>;
 		};
@@ -287,7 +293,7 @@
 	gic: interrupt-controller@e82b0000 {
 		compatible = "arm,cortex-a9-gic";
 		reg = <0x0 0xe82b1000 0x0 0x1000>,	/* GICD */
-		<0x0 0xe82b2000 0x0 0x1000>;	/* GICC */
+			<0x0 0xe82b2000 0x0 0x1000>;	/* GICC */
 		#address-cells = <0>;
 		#interrupt-cells = <3>;
 		interrupt-controller;
@@ -297,190 +303,936 @@
 	pmu {
 		compatible = "arm,cortex-a53-pmu";
 		interrupts = <GIC_SPI 24 IRQ_TYPE_LEVEL_HIGH>,
-		<GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>,
-		<GIC_SPI 26 IRQ_TYPE_LEVEL_HIGH>,
-		<GIC_SPI 27 IRQ_TYPE_LEVEL_HIGH>,
-		<GIC_SPI 2 IRQ_TYPE_LEVEL_HIGH>,
-		<GIC_SPI 3 IRQ_TYPE_LEVEL_HIGH>,
-		<GIC_SPI 4 IRQ_TYPE_LEVEL_HIGH>,
-		<GIC_SPI 5 IRQ_TYPE_LEVEL_HIGH>;
+			<GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>,
+			<GIC_SPI 26 IRQ_TYPE_LEVEL_HIGH>,
+			<GIC_SPI 27 IRQ_TYPE_LEVEL_HIGH>,
+			<GIC_SPI 2 IRQ_TYPE_LEVEL_HIGH>,
+			<GIC_SPI 3 IRQ_TYPE_LEVEL_HIGH>,
+			<GIC_SPI 4 IRQ_TYPE_LEVEL_HIGH>,
+			<GIC_SPI 5 IRQ_TYPE_LEVEL_HIGH>;
 		interrupt-affinity = <&cpu0>,
-		<&cpu1>,
-		<&cpu2>,
-		<&cpu3>,
-		<&cpu4>,
-		<&cpu5>,
-		<&cpu6>,
-		<&cpu7>;
+			<&cpu1>,
+			<&cpu2>,
+			<&cpu3>,
+			<&cpu4>,
+			<&cpu5>,
+			<&cpu6>,
+			<&cpu7>;
 	};
 
 	timer {
 		compatible = "arm,armv8-timer";
 		interrupt-parent = <&gic>;
 		interrupts = <GIC_PPI 13 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_LEVEL_LOW)>,
-		<GIC_PPI 14 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_LEVEL_LOW)>,
-		<GIC_PPI 11 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_LEVEL_LOW)>,
-		<GIC_PPI 10 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_LEVEL_LOW)>;
+			<GIC_PPI 14 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_LEVEL_LOW)>,
+			<GIC_PPI 11 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_LEVEL_LOW)>,
+			<GIC_PPI 10 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_LEVEL_LOW)>;
 		arm,no-tick-in-suspend;
 		clock-frequency = <1920000>;
 	};
 
-	reserved-memory {
-		#address-cells = <2>;
-		#size-cells = <2>;
-		ranges;
-
-		ddr_training1: memory@7b00000 {
-			reg = <0x0 0x07b00000 0x0 0x8000>;
-			no-map;
-		};
-
-		mntndump: memory@e000000 {
-			reg = <0x0 0x0e000000 0x0 0x1000>;
-			no-map;
-		};
-
-		kerneldump: memory@e001000 {
-			reg = <0x0 0x0e001000 0x0 0x1ffff000>;
-			no-map;
-		};
-
-		tui_mem: memory@30000000 {
-			reg = <0x0 0x30000000 0x0 0x1000000>;
-			no-map;
-		};
-
-		graphic: memory@31000000 {
-			reg = <0x0 0x31000000 0x0 0x1a40000>;
-			no-map;
-		};
-
-		bbox_mem: memory@34000000 {
-			reg = <0x0 0x34000000 0x0 0x800000>;
-			no-map;
-		};
-
-		lpmx_core: lpmx-memory@34900000 {
-			reg = <0x0 0x34900000 0x0 0x100000>;
-			no-map;
-		};
-
-		fka_mem: memory@34a00000 {
-			reg = <0x0 0x34a00000 0x0 0x78000>;
-			no-map;
-		};
-
-		smmu_pdg: memory@34a78000 {
-			reg = <0x0 0x34a78000 0x0 0x8000>;
-			no-map;
-		};
-
-		sensorhub_share_mem: memory@34a80000 {
-			reg = <0x0 0x34a80000 0x0 0x80000>;
-			no-map;
-		};
-
-		isp_boot: memory@34b00000 {
-			reg = <0x0 0x34b00000 0x0 0x20000>;
-			no-map;
-		};
-
-		ivp: memory@34e00000 {
-			reg = <0x0 0x34e00000 0x0 0x100000>;
-			no-map;
-		};
-
-		hifi_data: memory@34f00000 {
-			reg = <0x0 0x34f00000 0x0 0x400000>;
-			no-map;
-		};
-
-		hifi_ipc: memory@35300000 {
-			reg = <0x0 0x35300000 0x0 0x100000>;
-			no-map;
-		};
-
-		hifi_s: memory@35400000 {
-			reg = <0x0 0x35400000 0x0 0xa00000>;
-			no-map;
-		};
-
-		bl31_s: memory@35e00000 {
-			reg = <0x0 0x35e00000 0x0 0xc0000>;
-			no-map;
-		};
-
-		sensorhub_s: memory@36000000 {
-			reg = <0x0 0x36000000 0x0 0x200000>;
-			no-map;
-		};
-
-		secureos_s: memory@36200000 {
-			reg = <0x0 0x36200000 0x0 0x1e00000>;
-			no-map;
-		};
-
-		modem_s: memory@38000000 {
-			reg = <0x0 0x38000000 0x0 0x6c00000>;
-			no-map;
-		};
-
-		modem_share_mem: memory@3ec00000 {
-			reg = <0x0 0x3ec00000 0x0 0x500000>;
-			no-map;
-		};
-
-		modem_socp: memory@3f100000 {
-			reg = <0x0 0x3f100000 0x0 0x1000000>;
-			no-map;
-		};
-
-		modem_log: memory@40500000 {
-			reg = <0x0 0x40500000 0x0 0x3200000>;
-			no-map;
-		};
-
-		xmode_data: memory@43700000 {
-			reg = <0x0 0x43700000 0x0 0x18900000>;
-			no-map;
-		};
-
-		cma: memory@5c000000 {
-			reg = <0x0 0x5c000000 0x0 0x1000000>;
-			no-map;
-		};
-	};
-    
 	soc {
 		compatible = "simple-bus";
 		#address-cells = <2>;
 		#size-cells = <2>;
 		ranges;
 		
-		osc32k: osc32khz {
-			ranges;
-			compatible = "fixed-clock";
-			#clock-cells = <0>;
-			clock-frequency = <32768>;
-			clock-output-names = "osc32khz";
-		};
-	
-		pclk: apb_pclk {
-			ranges;
-			compatible = "fixed-clock";
-			#clock-cells = <0>;
-			clock-frequency = <20000000>;
-			clock-output-names = "apb_pclk";
-		};
-
-		timer0: timer@fff14000 {
+		dual_timer: timer@fff14000 {
 			compatible = "arm,sp804";
 			reg = <0x0 0xfff14000 0x0 0x1000>;
 			interrupts = <GIC_SPI 48 IRQ_TYPE_LEVEL_HIGH>,
-			<GIC_SPI 49 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&osc32k &osc32k &pclk>;
+				<GIC_SPI 49 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ao_ctrl HI6250_OSC32KHZ>,
+				<&ao_ctrl HI6250_OSC32KHZ>,
+				<&ao_ctrl HI6250_APB_PCLK>;
 			clock-names = "osc32khz", "osc32khz", "apb_pclk";
+		};
+		
+		ao_ctrl: ao_ctrl@0 {
+			compatible = "hisilicon,hi6250-aoctrl", "syscon";
+			reg = <0x0 0x00000000 0x0 0xffffffff>;
+			#clock-cells = <1>;
+		};
+
+		pmu_ctrl: pmu_ctrl@fff34000 {
+			compatible = "hisilicon,hi6250-pmuctrl", "syscon";
+			reg = <0x0 0xfff34000 0x0 0x1000>;
+			#clock-cells = <1>;
+		};
+
+		sys_ctrl: sys_ctrl@fff0a000 {
+			compatible = "hisilicon,hi6250-sysctrl", "syscon";
+			reg = <0x0 0xfff0a000 0x0 0x1000>;
+			#clock-cells = <1>;
+		};
+		
+		crg_ctrl: crg_ctrl@fff35000 {
+			compatible = "hisilicon,hi6250-crgctrl", "syscon";
+			reg = <0x0 0xfff35000 0x0 0x1000>;
+			#clock-cells = <1>;
+		};
+		
+		iomcu_ctrl: syscon@ffd7e000 { /* unused */
+			compatible = "syscon";
+			reg = <0x0 0xffd7e000 0x0 0x1000>;
+		};
+
+		pctrl: pctrl@e8a09000 { /* unused */
+			compatible = "syscon";
+			reg = <0x0 0xe8a09000 0x0 0x2000>;
+		};
+
+		stub_clock: stub_clock {
+			compatible = "hisilicon,hi6250-stub-clk";
+			hisilicon,hi6250-sys-ctrl = <&sys_ctrl>;
+			#clock-cells = <1>;
+			mboxes = <&mailbox 13 3 0>;
+		};
+		
+		mailbox: mailbox@e896b000 {
+			compatible = "hisilicon,hi3660-mbox";
+			reg = <0x0 0xe896b000 0x0 0x1000>;
+			interrupts = <GIC_SPI 192 IRQ_TYPE_LEVEL_HIGH>,
+				<GIC_SPI 193 IRQ_TYPE_LEVEL_HIGH>;
+			#mbox-cells = <3>;
+		};
+
+		usb_otg: usb@ff100000 {
+			compatible = "hisilicon,hi6250-usb";
+			reg = <0x0 0xff200000 0x0 0x100>;
+			hisilicon,pericrg-syscon = <&crg_ctrl>;
+			hisilicon,pctrl-syscon = <&pctrl>;
+			hisilicon,pmuctrl-syscon = <&pmu_ctrl>;
+			clocks = <&pmu_ctrl HI6250_CLK_GATE_ABB_192>;
+			clock-names = "clk_abb_192";
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+			status = "disable";
+
+			usb_dwc2: usb@ff100000 {
+				compatible = "hisilicon,hi6220-usb", "snps,dwc2";
+				reg = <0x0 0xff100000 0x0 0x40000>;
+				interrupts = <GIC_SPI 159 IRQ_TYPE_LEVEL_HIGH>;
+				dr_mode = "peripheral";
+				g-rx-fifo-size = <512>;
+				g-np-tx-fifo-size = <128>;
+				g-tx-fifo-size = <128 128 128 128 128 128 128 128
+				   16  16  16  16  16  16  16>;
+			};
+		};
+
+		iomcu_rst: iomcu_rst_controller {
+			compatible = "hisilicon,hi3660-reset";
+			hisi,rst-syscon = <&iomcu_ctrl>;
+			#reset-cells = <2>;
+		};
+		
+		crg_rst: crg_rst_controller {
+			compatible = "hisilicon,hi3660-reset";
+			hisi,rst-syscon = <&crg_ctrl>;
+			#reset-cells = <2>;
+		};
+		
+		sys_rst: sys_rst_controller {
+			compatible = "hisilicon,hi3660-reset";
+			hisi,rst-syscon = <&sys_ctrl>;
+			#reset-cells = <2>;
+		};
+		
+		uart0: serial@fdf02000 {
+			compatible = "arm,pl011", "arm,primecell";
+			reg = <0x0 0xfdf02000 0x0 0x1000>;
+			interrupts = <GIC_SPI 74 IRQ_TYPE_LEVEL_HIGH>;
+			dma-names = "rx", "tx";
+			dmas = <&dma0 0 &dma0 1>;
+			clocks = <&crg_ctrl HI6250_CLK_UART0_FAC>,
+				 <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "clk_uart0_fac", "apb_pclk";
+			resets = <&crg_rst 0x78 10>; // TODO: review
+			status = "disable";
+		};
+
+		uart1: serial@fdf00000 {
+			compatible = "arm,pl011", "arm,primecell";
+			reg = <0x0 0xfdf00000 0x0 0x1000>;
+			interrupts = <GIC_SPI 75 IRQ_TYPE_LEVEL_HIGH>;
+			dma-names = "rx", "tx";
+			dmas = <&dma0 2 &dma0 3>;
+			clocks = <&crg_ctrl HI6250_CLK_UART1>,
+				 <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "clk_uart1", "apb_pclk";
+			resets = <&crg_rst 0x78 11>; // TODO: review
+			status = "disable";
+		};
+
+		uart2: serial@fdf03000 {
+			compatible = "arm,pl011", "arm,primecell";
+			reg = <0x0 0xfdf03000 0x0 0x1000>;
+			interrupts = <GIC_SPI 76 IRQ_TYPE_LEVEL_HIGH>;
+			dma-names = "rx", "tx";
+			dmas = <&dma0 4 &dma0 5>;
+			clocks = <&crg_ctrl HI6250_CLK_UART2>,
+				 <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "clk_uart2", "apb_pclk";
+			resets = <&crg_rst 0x78 12>; // TODO: review
+			status = "disable";
+		};
+
+		uart3: serial@ffd74000 {
+			compatible = "arm,pl011", "arm,primecell";
+			reg = <0x0 0xffd74000 0x0 0x1000>;
+			interrupts = <GIC_SPI 114 IRQ_TYPE_LEVEL_HIGH>;
+			dma-names = "rx", "tx";
+			dmas = <&iomcu_dma 8 &iomcu_dma 9>;
+			clocks = <&sys_ctrl HI6250_CLK_GATE_UART3>,
+				 <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "clk_uart3", "apb_pclk";
+			resets = <&iomcu_rst 0x20 11>; // TODO: review
+			status = "disable";
+		};
+
+		uart4: serial@fdf01000 {
+			compatible = "arm,pl011", "arm,primecell";
+			reg = <0x0 0xfdf01000 0x0 0x1000>;
+			interrupts = <GIC_SPI 77 IRQ_TYPE_LEVEL_HIGH>;
+			dma-names = "rx", "tx";
+			dmas = <&dma0 6 &dma0 7>;
+			clocks = <&crg_ctrl HI6250_CLK_UART4>,
+				 <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "clk_uart4", "apb_pclk";
+			resets = <&crg_rst 0x78 14>; // TODO: review
+			status = "disable";
+		};
+
+		uart5: serial@fdf05000 {
+			compatible = "arm,pl011", "arm,primecell";
+			reg = <0x0 0xfdf05000 0x0 0x1000>;
+			interrupts = <GIC_SPI 78 IRQ_TYPE_LEVEL_HIGH>;
+			dma-names = "rx", "tx";
+			dmas = <&dma0 8 &dma0 9>;
+			clocks = <&crg_ctrl HI6250_CLK_UART5>,
+				 <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "clk_uart5", "apb_pclk";
+			resets = <&crg_rst 0x78 15>; // TODO: review
+			status = "disable";
+		};
+
+		uart6: serial@fff32000 {
+			compatible = "arm,pl011", "arm,primecell";
+			reg = <0x0 0xfff32000 0x0 0x1000>;
+			interrupts = <GIC_SPI 79 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&crg_ctrl HI6250_UART6CLK>,
+				 <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "uart6clk", "apb_pclk";
+			resets = <&sys_rst 0x504 9>; // TODO: review
+			status = "disable";
+		};
+
+		range: gpio-range {
+			#pinctrl-single,gpio-range-cells = <3>;
+		};
+		
+		pmx0: pinmux@e896c000 {
+			compatible = "pinconf-single";
+			reg = <0x0 0xe896c000 0x0 0x228>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			#pinctrl-cells = <1>;
+			#gpio-range-cells = <3>;
+			pinctrl-single,register-width = <32>;
+			pinctrl-single,function-mask = <7>;
+			pinctrl-single,gpio-range = <&range 6 2 0 &range 34 2 0>;
+		};
+
+		pmx1: pinmux@fff11000 {
+			compatible = "pinconf-single";
+			reg = <0x0 0xe896c800 0x0 0xac>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			#pinctrl-cells = <1>;
+			#gpio-range-cells = <3>;
+			pinctrl-single,register-width = <32>;
+			pinctrl-single,function-mask = <7>;
+			pinctrl-single,gpio-range = <&range 5 2 0 &range 9 2 0>;
+		};
+
+		pmx2: pinmux@e896c800 {
+			compatible = "pinconf-single";
+			reg = <0x0 0xe896c800 0x0 0x234>;
+			status = "disable";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			#pinctrl-cells = <1>;
+			pinctrl-single,register-width = <32>;
+		};
+		
+		pmx3: pinmux@fff11800 {
+			compatible = "pinconf-single";
+			reg = <0x0 0xfff11800 0x0 0xbc>;
+			status = "disable";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			#pinctrl-cells = <1>;
+			pinctrl-single,register-width = <32>;
+		};
+
+		i2c0: i2c@ffd71000 {
+			compatible = "snps,designware-i2c";
+			reg = <0x0 0xffd71000 0x0 0x1000>;
+			status = "disable";
+			interrupts = <GIC_SPI 118 IRQ_TYPE_LEVEL_HIGH>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clocks = <&crg_ctrl HI6250_CLK_I2C0>;
+			resets = <&iomcu_rst 0x20 3>; // TODO: review
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c0_pmx_func &i2c0_cfg_func>;
+		};
+		
+		i2c2: i2c@ffd73000 {
+			compatible = "snps,designware-i2c";
+			reg = <0x0 0xffd73000 0x0 0x1000>;
+			status = "disable";
+			interrupts = <GIC_SPI 120 IRQ_TYPE_LEVEL_HIGH>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clocks = <&crg_ctrl HI6250_CLK_I2C2>;
+			resets = <&iomcu_rst 0x20 5>; // TODO: review
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c2_pmx_func &i2c2_cfg_func>;
+		};
+
+		i2c3: i2c@fdf0c000 {
+			compatible = "snps,designware-i2c";
+			reg = <0x0 0xfdf0c000 0x0 0x1000>;
+			status = "disable";
+			interrupts = <GIC_SPI 81 IRQ_TYPE_LEVEL_HIGH>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clocks = <&crg_ctrl HI6250_CLK_I2C3>;
+			resets = <&crg_rst 0x78 7>; // TODO: review
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c3_pmx_func &i2c3_cfg_func>;
+		};
+
+		i2c4: i2c@fdf0d000 {
+			compatible = "snps,designware-i2c";
+			reg = <0x0 0xfdf0d000 0x0 0x1000>;
+			status = "disable";
+			interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clocks = <&crg_ctrl HI6250_CLK_I2C4>;
+			resets = <&crg_rst 0x78 27>; // TODO: review
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2c4_pmx_func &i2c4_cfg_func>;
+		};
+
+		gpio0: gpio@e8a0b000 {
+			reg = <0 0xe8a0b000 0 0x1000>;
+			interrupts = <0 84 0x4>;
+			compatible = "arm,pl061", "arm,primecell";
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 1 0 3 &pmx0 6 3 2>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO0>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio0", "apb_pclk";
+		};
+
+		gpio1: gpio@e8a0c000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a0c000 0 0x1000>;
+			interrupts = <0 85 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 5 8>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO1>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio1", "apb_pclk";
+		};
+
+		gpio2: gpio@e8a0d000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a0d000 0 0x1000>;
+			interrupts = <0 86 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 13 8>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO2>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio2", "apb_pclk";
+		};
+
+		gpio3: gpio@e8a0e000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a0e000 0 0x1000>;
+			interrupts = <0 87 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 21 8>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO3>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio3", "apb_pclk";
+		};
+
+		gpio4: gpio@e8a0f000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a0f000 0 0x1000>;
+			interrupts = <0 88 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 29 8>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO4>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio4", "apb_pclk";
+		};
+
+		gpio5: gpio@e8a10000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a10000 0 0x1000>;
+			interrupts = <0 89 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 37 8>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO5>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio5", "apb_pclk";
+		};
+
+		gpio6: gpio@e8a11000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a11000 0 0x1000>;
+			interrupts = <0 90 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 45 6>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO6>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio6", "apb_pclk";
+		};
+
+		gpio7: gpio@e8a12000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a12000 0 0x1000>;
+			interrupts = <0 91 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 53 8>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO7>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio7", "apb_pclk";
+		};
+
+		gpio8: gpio@e8a13000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a13000 0 0x1000>;
+			interrupts = <0 92 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 61 8>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO8>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio8", "apb_pclk";
+		};
+
+		gpio9: gpio@e8a14000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a14000 0 0x1000>;
+			interrupts = <0 93 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 69 8>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO9>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio9", "apb_pclk";
+		};
+
+		gpio10: gpio@e8a15000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a15000 0 0x1000>;
+			interrupts = <0 94 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 77 8>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO10>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio10", "apb_pclk";
+		};
+
+		gpio11: gpio@e8a16000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a16000 0 0x1000>;
+			interrupts = <0 95 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 85 8>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO11>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio11", "apb_pclk";
+		};
+
+		gpio12: gpio@e8a17000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a17000 0 0x1000>;
+			interrupts = <0 96 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 93 8>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO12>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio12", "apb_pclk";
+		};
+
+		gpio13: gpio@e8a18000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a18000 0 0x1000>;
+			interrupts = <0 97 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 101 8>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO13>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio13", "apb_pclk";
+		};
+
+		gpio14: gpio@e8a19000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a19000 0 0x1000>;
+			interrupts = <0 98 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 109 8>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO14>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio14", "apb_pclk";
+		};
+
+		gpio15: gpio@e8a1a000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a1a000 0 0x1000>;
+			interrupts = <0 99 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 117 8>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO15>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio15", "apb_pclk";
+		};
+
+		gpio16: gpio@e8a1b000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a1b000 0 0x1000>;
+			interrupts = <0 100 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 125 8>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO16>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio16", "apb_pclk";
+		};
+
+		gpio17: gpio@e8a1c000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a1c000 0 0x1000>;
+			interrupts = <0 101 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 133 5>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO17>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio17", "apb_pclk";
+		};
+
+		gpio18: gpio@e8a1d000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a1d000 0 0x1000>;
+			interrupts = <0 102 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx0 0 51 2>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO18>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio18", "apb_pclk";
+		};
+
+		gpio19: gpio@e8a1e000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a1e000 0 0x1000>;
+			interrupts = <0 103 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO19>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio19", "apb_pclk";
+		};
+
+		gpio20: gpio@e8a1f000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a1f000 0 0x1000>;
+			interrupts = <0 104 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO20>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio20", "apb_pclk";
+		};
+
+		gpio21: gpio@e8a20000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xe8a20000 0 0x1000>;
+			interrupts = <0 105 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&crg_ctrl HI6250_PCLK_GPIO21>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_gpio21", "apb_pclk";
+		};
+
+		gpio22: gpio@fff0b000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xfff0b000 0 0x1000>;
+			interrupts = <0 106 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx1 2 0 6>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&sys_ctrl HI6250_PCLK_AO_GPIO0>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_ao_gpio0", "apb_pclk";
+		};
+
+		gpio23: gpio@fff0c000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xfff0c000 0 0x1000>;
+			interrupts = <0 107 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx1 0 6 7>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&sys_ctrl HI6250_PCLK_AO_GPIO1>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_ao_gpio1", "apb_pclk";
+		};
+
+		gpio24: gpio@fff0d000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xfff0d000 0 0x1000>;
+			interrupts = <0 108 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx1 0 13 6>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&sys_ctrl HI6250_PCLK_AO_GPIO2>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_ao_gpio2", "apb_pclk";
+		};
+
+		gpio25: gpio@fff0e000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xfff0e000 0 0x1000>;
+			interrupts = <0 109 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx1 0 21 4 &pmx1 5 25 3>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&sys_ctrl HI6250_PCLK_AO_GPIO3>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_ao_gpio3", "apb_pclk";
+		};
+
+		gpio26: gpio@fff0f000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xfff0f000 0 0x1000>;
+			interrupts = <0 110 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx1 0 28 8>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&sys_ctrl HI6250_PCLK_AO_GPIO4>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_ao_gpio4", "apb_pclk";
+		};
+
+		gpio27: gpio@fff10000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xfff10000 0 0x1000>;
+			interrupts = <0 111 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx1 0 36 3>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&sys_ctrl HI6250_PCLK_AO_GPIO5>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_ao_gpio5", "apb_pclk";
+		};
+
+		gpio28: gpio@fff1d000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xfff1d000 0 0x1000>;
+			interrupts = <0 162 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx1 0 19 2>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&sys_ctrl HI6250_PCLK_AO_GPIO6>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_ao_gpio6", "apb_pclk";
+		};
+
+		gpio29: gpio@fff1e000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xfff1e000 0 0x1000>;
+			interrupts = <0 163 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&pmx1 0 39 4>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&sys_ctrl HI6250_PCLK_AO_GPIO7>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_ao_gpio7", "apb_pclk";
+		};
+
+		gpio30: gpio@fff1f000 {
+			compatible = "arm,pl061", "arm,primecell";
+			reg = <0 0xfff1f000 0 0x1000>;
+			interrupts = <0 164 0x4>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			clocks = <&sys_ctrl HI6250_PCLK_AO_GPIO8>, <&ao_ctrl HI6250_APB_PCLK>;
+			clock-names = "pclk_ao_gpio8", "apb_pclk";
+		};
+
+		mali: gpu@e8970000 {
+			compatible = "arm,mali-t830";
+			reg = <0x0 0xe8970000 0x0 0x4000>;
+			status = "disable";
+			
+			interrupt-parent = <&gic>;
+			interrupts = <GIC_SPI 258 IRQ_TYPE_LEVEL_HIGH>,
+					 <GIC_SPI 259 IRQ_TYPE_LEVEL_HIGH>,
+					 <GIC_SPI 260 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "JOB", "MMU", "GPU";
+
+			clocks = <&stub_clock HI6250_CLK_STUB_GPU>;
+		};
+
+		pmic: pmic@fff34000 {
+			compatible = "hisilicon,hi655x-pmic";
+			reg = <0x0 0xfff34000 0x0 0x1000>;
+			status = "disable";
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			pmic-gpios = <&gpio17 2 GPIO_ACTIVE_HIGH>;
+			#clock-cells = <0>;
+
+			regulators {
+				ldo4: LDO4 {
+					regulator-name = "ldo4";
+					regulator-min-microvolt = <1700000>;
+					regulator-max-microvolt = <1900000>;
+					regulator-enable-ramp-delay = <120>;
+				};
+
+				ldo9: LDO9 {
+					regulator-name = "ldo9";
+					regulator-min-microvolt = <1750000>;
+					regulator-max-microvolt = <3300000>;
+					regulator-enable-ramp-delay = <360>;
+				};
+
+				ldo13: LDO13 {
+					regulator-name = "ldo13";
+					regulator-min-microvolt = <1800000>;
+					regulator-max-microvolt = <2900000>;
+					regulator-enable-ramp-delay = <120>;
+				};
+
+				ldo15: LDO15 {
+					regulator-name = "ldo15";
+					regulator-min-microvolt = <1750000>;
+					regulator-max-microvolt = <3000000>;
+					regulator-enable-ramp-delay = <120>;
+				};
+
+				ldo16: LDO16 {
+					regulator-name = "ldo16";
+					regulator-min-microvolt = <1750000>;
+					regulator-max-microvolt = <3000000>;
+					regulator-enable-ramp-delay = <360>;
+				};
+
+				ldo17: LDO17 {
+					regulator-name = "ldo17";
+					regulator-min-microvolt = <2600000>;
+					regulator-max-microvolt = <3300000>;
+					regulator-enable-ramp-delay = <120>;
+				};
+
+				ldo19: LDO19 {
+					regulator-name = "ldo19";
+					regulator-min-microvolt = <1800000>;
+					regulator-max-microvolt = <2900000>;
+					regulator-enable-ramp-delay = <120>;
+				};
+
+				ldo20: LDO20 {
+					regulator-name = "ldo20";
+					regulator-min-microvolt = <800000>;
+					regulator-max-microvolt = <1320000>;
+					regulator-enable-ramp-delay = <120>;
+				};
+
+				ldo21: LDO21 {
+					regulator-name = "ldo21";
+					regulator-min-microvolt = <1700000>;
+					regulator-max-microvolt = <1900000>;
+					regulator-enable-ramp-delay = <120>;
+				};
+
+				ldo24: LDO24 {
+					regulator-name = "ldo24";
+					regulator-min-microvolt = <2600000>;
+					regulator-max-microvolt = <3300000>;
+					regulator-enable-ramp-delay = <120>;
+				};
+
+				ldo25: LDO25 {
+					regulator-name = "ldo25";
+					regulator-min-microvolt = <1500000>;
+					regulator-max-microvolt = <3000000>;
+					regulator-enable-ramp-delay = <120>;
+				};
+
+				ldo29: LDO29 {
+					regulator-name = "ldo29";
+					regulator-min-microvolt = <1000000>;
+					regulator-max-microvolt = <1300000>;
+					regulator-enable-ramp-delay = <120>;
+				};
+
+				ldo31: LDO31 {
+					regulator-name = "ldo31";
+					regulator-min-microvolt = <2500000>;
+					regulator-max-microvolt = <3200000>;
+					regulator-enable-ramp-delay = <120>;
+				};
+
+				ldo32: LDO32 {
+					regulator-name = "ldo32";
+					regulator-min-microvolt = <900000>;
+					regulator-max-microvolt = <1320000>;
+					regulator-enable-ramp-delay = <120>;
+				};
+
+				ldo33: LDO33 {
+					regulator-name = "ldo33";
+					regulator-min-microvolt = <1700000>;
+					regulator-max-microvolt = <1900000>;
+					regulator-enable-ramp-delay = <120>;
+				};
+			};
+		};
+
+		dma0: dma@fdf30000 {
+			compatible = "hisilicon,k3-dma-1.0";
+			reg = <0x0 0xfdf30000 0x0 0x1000>;
+			status = "disable";
+			#dma-cells = <1>;
+			dma-channels = <16>;
+			dma-requests = <32>;
+			dma-channel-mask = <0xfffe>;
+			interrupts = <GIC_SPI 143 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&crg_ctrl HI6250_CLK_DMAC>, <&ao_ctrl HI6250_APB_PCLK>;
+			dma-no-cci;
+			dma-type = "hi3660_dma";
+		};
+		
+		iomcu_dma: dma@ffd77000 {
+			compatible = "hisilicon,k3-dma-1.0";
+			reg = <0x0 0xffd77000 0x0 0x1000>;
+			status = "disable";
+			#dma-cells = <1>;
+			dma-channels = <8>;
+			dma-requests = <32>;
+			dma-channel-mask = <0xf0>;
+			interrupts = <GIC_SPI 125 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&crg_ctrl HI6250_CLK_DMA_IOMCU>, <&ao_ctrl HI6250_APB_PCLK>;
+			dma-no-cci;
+			dma-type = "hi3660_dma";
+		};
+
+		usb3_otg_bc: usb3_otg_bc@ff200000 {
+			compatible = "hisilicon,hi3660-usb3-otg-bc", "syscon", "simple-mfd";
+			reg = <0x0 0xff200000 0x0 0x1000>;
+			status = "disable";
+
+			usb_phy: usb-phy {
+				compatible = "hisilicon,hi3660-usb-phy";
+				#phy-cells = <0>;
+				hisilicon,pericrg-syscon = <&crg_ctrl>;
+				hisilicon,pctrl-syscon = <&pmu_ctrl>;
+				hisilicon,eye-diagram-param = <0x059066DB>;
+			};
+		};
+
+		// SD
+		dwmmc1: dwmmc1@ff37f000 {
+			compatible = "hisilicon,hi3660-dw-mshc";
+			reg = <0x0 0xff37f000 0x0 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			interrupts = <GIC_SPI 139 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&crg_ctrl HI6250_CLK_SD>, <&crg_ctrl HI6250_HCLK_SD>;
+			clock-names = "clk_sd", "hclk_sd";
+			hisilicon,peripheral-syscon = <&sys_ctrl>;
+			card-detect-delay = <200>;
+			vmmc-supply = <&ldo16>;
+			vqmmc-supply = <&ldo9>;
+			cd-vol = <0>;
+			cd-gpio = <&gpio25 3 0>;
+			status = "disable";
+		};
+
+		// SDIO
+		dwmmc2: dwmmc2@ff37d000 {
+			compatible = "hisilicon,hi3660-dw-mshc";
+			reg = <0x0 0xff37d000 0x0 0x1000>;
+			#address-cells = <0x1>;
+			#size-cells = <0x0>;
+			interrupts = <GIC_SPI 140 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&crg_ctrl HI6250_CLK_SDIO0>, <&crg_ctrl HI6250_HCLK_SDIO0>;
+			clock-names = "clk_sdio0", "hclk_sdio0";
+			card-detect-delay = <200>;
+			status = "disable";
 		};
 	};
 };
 
+#include "hi6250-huawei-bl-quirks.dtsi"
+#include "hi6250-pinctrl.dtsi"

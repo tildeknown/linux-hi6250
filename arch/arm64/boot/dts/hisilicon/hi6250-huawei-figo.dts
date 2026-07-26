@@ -1,12 +1,12 @@
 /dts-v1/;
 
 #include "hi6250.dtsi"
+#include "hi6250-huawei-bl-quirks.dtsi"
 
 / {
 	model = "Huawei P Smart";
 	compatible = "huawei,figo", "hisilicon,hi6250";
-    
-	aliases {};
+    chassis-type = "handset";
 
 	chosen {
 		bootargs = "earlycon=tty0 console=tty0";
@@ -48,5 +48,9 @@
 		device_type = "memory";
 		reg = <0x00 0x00400000 0x00 0x7fc00000>,
 		      <0x00 0x80000000 0x00 0x40000000>;
+	};
+	
+	soc {
+
 	};
 };

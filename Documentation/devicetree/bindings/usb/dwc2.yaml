@@ -18,6 +18,7 @@ properties:
     oneOf:
       - const: brcm,bcm2835-usb
       - const: hisilicon,hi6220-usb
+      - const: hisilicon,hi6250-usb
       - const: ingenic,jz4775-otg
       - const: ingenic,jz4780-otg
       - const: ingenic,x1000-otg
