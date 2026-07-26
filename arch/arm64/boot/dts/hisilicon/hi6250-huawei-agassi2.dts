@@ -22,12 +22,6 @@
 
 	};
 
-	memory@0 {
-		reg = <0x00 0x02400000 0x00 0x7dc00000>,
-              <0x00 0x80000000 0x00 0x40000000>;
-		device_type = "memory";
-	};
-
 	chosen {
 		bootargs = "earlycon=tty0 console=tty0";
 
