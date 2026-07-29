@@ -69,8 +69,6 @@
 	};
 };
 
-/*
-
 // enable pinmux
 &pmx0 {
 	status = "ok";
@@ -141,5 +139,3 @@
 &usb_phy {
 	hisilicon,eye-diagram-param = <0x059066DB>;
 };
-
-*/

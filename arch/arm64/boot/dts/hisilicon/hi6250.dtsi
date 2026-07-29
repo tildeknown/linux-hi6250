@@ -402,8 +402,6 @@
 			#reset-cells = <2>;
 		};
 		
-		/*
-		
 		uart0: serial@fdf02000 {
 			compatible = "arm,pl011", "arm,primecell";
 			reg = <0x0 0xfdf02000 0x0 0x1000>;
@@ -1195,6 +1193,5 @@
 			card-detect-delay = <200>;
 			status = "disable";
 		};
-		*/
 	};
 };
