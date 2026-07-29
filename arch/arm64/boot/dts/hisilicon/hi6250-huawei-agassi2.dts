@@ -11,7 +11,7 @@
 
 #include "hi6250.dtsi"
 #include "hi6250-huawei-bl-quirks.dtsi"
-/* #include "hi6250-pinctrl.dtsi" */
+#include "hi6250-pinctrl.dtsi"
 
 / {
 	model = "Huawei Mediapad T5";
