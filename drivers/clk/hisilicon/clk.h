@@ -92,6 +92,18 @@ struct hi6220_divider_clock {
 	const char		*alias;
 };
 
+struct hi6250_divider_clock {
+	unsigned int		id;
+	const char		*name;
+	const char		*parent_name;
+	unsigned long		flags;
+	unsigned long		offset;
+	u8			shift;
+	u8			width;
+	u32			mask;
+	const char		*alias;
+};
+
 struct hisi_gate_clock {
 	unsigned int		id;
 	const char		*name;
@@ -110,6 +122,9 @@ struct clk *hisi_register_clkgate_sep(struct device *, const char *,
 struct clk *hi6220_register_clkdiv(struct device *dev, const char *name,
 	const char *parent_name, unsigned long flags, void __iomem *reg,
 	u8 shift, u8 width, u32 mask_bit, spinlock_t *lock);
+struct clk *hi6220_register_clkdiv_mask(struct device *dev, const char *name,
+	const char *parent_name, unsigned long flags, void __iomem *reg,
+	u8 shift, u8 width, u32 mask, spinlock_t *lock);
 
 struct hisi_clock_data *hisi_clk_alloc(struct platform_device *, int);
 struct hisi_clock_data *hisi_clk_init(struct device_node *, int);
@@ -132,6 +147,8 @@ int hisi_clk_register_gate(const struct hisi_gate_clock *,
 void hisi_clk_register_gate_sep(const struct hisi_gate_clock *,
 				int, struct hisi_clock_data *);
 void hi6220_clk_register_divider(const struct hi6220_divider_clock *,
+				int, struct hisi_clock_data *);
+void hi6250_clk_register_divider(const struct hi6250_divider_clock *,
 				int, struct hisi_clock_data *);
 
 #define hisi_clk_unregister(type) \
