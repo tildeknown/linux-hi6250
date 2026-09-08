@@ -12,3 +12,10 @@ config COMMON_RESET_HI6220
 	default ARCH_HISI
 	help
 	  Build the Hisilicon Hi6220 reset driver.
+	
+config COMMON_RESET_HI3660_MULTI
+	tristate "Hi3660 Reset Multi Driver"
+	depends on ARCH_HISI || COMPILE_TEST
+	default ARCH_HISI
+	help
+	  Build the Hisilicon Hi3660 reset multi driver.
