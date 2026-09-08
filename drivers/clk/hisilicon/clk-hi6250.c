@@ -24,10 +24,10 @@ static const struct hisi_fixed_rate_clock hi6250_fixed_rate_clks[] = {
   { HI6250_CLKIN_SYS, "clkin_sys", NULL, 0, 19200000 },
   { HI6250_CLK_PPLL0, "clk_ppll0", NULL, 0, 1440000000 },
   { HI6250_CLK_PPLL1, "clk_ppll1", NULL, 0, 1334000000 },
+  { HI6250_CLK_PPLL3, "clk_ppll3", NULL, 0, 1600000000 },
   // { HI6250_CLKIN_REF, "clkin_ref", NULL, 0, 32764 },
   // { HI6250_CLK_FLL_SRC, "clk_fll_src", NULL, 0, 128000000 },
   // { HI6250_CLK_PPLL2, "clk_ppll2", NULL, 0, 1290000000 },
-  // { HI6250_CLK_PPLL3, "clk_ppll3", NULL, 0, 1600000000 },
   // { HI6250_CLK_MODEM_BASE, "clk_modem_base", NULL, 0, 49152000 },
   // { HI6250_CLK_FAKE_DISPLAY, "clk_fake_display", NULL, 0, 20000000 },
   // { HI6250_UART0CLK_DBG, "uart0clk_dbg", NULL, 0, 19200000 },
@@ -131,6 +131,7 @@ static const struct hisi_gate_clock hi6250_sctrl_gate_clks[] = {
 
 static const struct hisi_gate_clock hi6250_sctrl_gate_sep_clks[] = {
   { HI6250_PCLK_AO_GPIO3, "pclk_ao_gpio3", "clk_aobus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x160, 14, 0, },
+  { HI6250_PCLK_AO_GPIO1, "pclk_ao_gpio1", "clk_aobus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x160, 12, 0, },
   // { HI6250_CLK_TIMER0_A, "clk_timer0_a", "clkmux_timer0_a", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x0, -1, 0, },
   // { HI6250_CLK_TIMER0_B, "clk_timer0_b", "clkmux_timer0_b", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x0, -1, 0, },
   // { HI6250_CLK_TIMER2_A, "clk_timer2_a", "clkmux_timer2_a", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x0, -1, 0, },
@@ -158,7 +159,6 @@ static const struct hisi_gate_clock hi6250_sctrl_gate_sep_clks[] = {
   // { HI6250_PCLK_RTC, "pclk_rtc", "clk_aobus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x160, 1, 0, },
   // { HI6250_PCLK_RTC1, "pclk_rtc1", "clk_aobus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x160, 2, 0, },
   // { HI6250_PCLK_AO_GPIO0, "pclk_ao_gpio0", "clk_aobus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x160, 11, 0, },
-  // { HI6250_PCLK_AO_GPIO1, "pclk_ao_gpio1", "clk_aobus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x160, 12, 0, },
   // { HI6250_PCLK_AO_GPIO2, "pclk_ao_gpio2", "clk_aobus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x160, 13, 0, },
   // { HI6250_PCLK_AO_GPIO4, "pclk_ao_gpio4", "clk_aobus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x160, 21, 0, },
   // { HI6250_PCLK_AO_GPIO5, "pclk_ao_gpio5", "clk_aobus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x160, 22, 0, },
@@ -179,7 +179,7 @@ static const struct hisi_gate_clock hi6250_sctrl_gate_sep_clks[] = {
 };
 
 
-static const struct hi6220_divider_clock hi6250_sctrl_divider_clks[] = {
+static const struct hi6250_divider_clock hi6250_sctrl_divider_clks[] = {
   { HI6250_CLK_AOBUS_DIV, "clk_aobus_div", "clk_ppll0", CLK_SET_RATE_PARENT, 0x254, 0, 6, 0x3f0000, },
   // { HI6250_CLKDIV_OUT0TCXO, "clkdiv_out0tcxo", "clkin_sys", CLK_SET_RATE_PARENT, 0x254, 6, 3, 0x1c00000, },
   // { HI6250_CLKDIV_OUT1TCXO, "clkdiv_out1tcxo", "clkin_sys", CLK_SET_RATE_PARENT, 0x254, 9, 3, 0xe000000, },
@@ -247,7 +247,7 @@ static void __init hi6250_clk_sys_init(struct device_node *np)
 				ARRAY_SIZE(hi6250_sctrl_gate_clks), clk_data_sys);
 	hisi_clk_register_gate_sep(hi6250_sctrl_gate_sep_clks,
 				ARRAY_SIZE(hi6250_sctrl_gate_sep_clks), clk_data_sys);
-  hi6220_clk_register_divider(hi6250_sctrl_divider_clks,
+  hi6250_clk_register_divider(hi6250_sctrl_divider_clks,
 				ARRAY_SIZE(hi6250_sctrl_divider_clks), clk_data_sys);
   hisi_clk_register_mux(hi6250_sctrl_mux_clks,
 				ARRAY_SIZE(hi6250_sctrl_mux_clks), clk_data_sys);
@@ -260,12 +260,12 @@ CLK_OF_DECLARE_DRIVER(hi6250_clk_sysctrl, "hisilicon,hi6250-sysctrl", hi6250_clk
 static const struct hisi_fixed_factor_clock hi6250_crgctrl_fixed_factor_clks[] = {
   { HI6250_CLK_ABB_USB, "clk_abb_usb", "clk_gate_abb_192", 0x1, 1, 0, },
   { HI6250_CLK_SYSBUS_DIV, "clk_sysbus_div", "clk_sysbus_mux", 0x1, 6, 0, },
+  { HI6250_CLK_FACTOR_MMC0, "clk_factor_mmc0", "clkin_sys", 0x1, 6, 0, },
   // { HI6250_CLK_WD0_HIGH, "clk_wd0_high", "clk_cfgbus_div", 0x1, 1, 0, },
   // { HI6250_CLK_AT, "clk_at", "clk_cssys_div", 0x1, 1, 0, },
   // { HI6250_CLK_TRACK, "clk_track", "clkdiv_track", 0x1, 1, 0, },
   // { HI6250_PCLK_DBG, "pclk_dbg", "pclkdiv_dbg", 0x1, 1, 0, },
   // { HI6250_CLK_DMA_IOMCU, "clk_dma_iomcu", "clk_fll_src", 0x1, 4, 0, },
-  // { HI6250_CLK_FACTOR_MMC0, "clk_factor_mmc0", "clkin_sys", 0x1, 6, 0, },
   // { HI6250_CLK_A53HPM_DIV, "clk_a53hpm_div", "clk_ap_ppll0", 0x1, 3, 0, },
   // { HI6250_CLK_UART0_FAC, "clk_uart0_fac", "clkmux_uartl", 0x1, 1, 0, },
   // { HI6250_CLKFAC_USB2PHY, "clkfac_usb2phy", "clk_ap_ppll0", 0x1, 60, 0, },
@@ -286,10 +286,10 @@ static const struct hisi_fixed_factor_clock hi6250_crgctrl_fixed_factor_clks[] =
 
 
 static const struct hisi_gate_clock hi6250_crgctrl_gate_clks[] = {
+  { HI6250_CLK_ANDGT_MMC1, "clk_andgt_mmc1", "clk_sd_muxpll", CLK_GATE_HIWORD_MASK, 0xf4, 3, 0, },
   // { HI6250_CLK_GATE_VIVOBUS_ANDGT, "clk_gate_vivobus_andgt", "clk_vivobus_mux", CLK_GATE_HIWORD_MASK, 0xf8, 1, 0, },
   // { HI6250_CLK_GATE_VCODECBUS_ANDGT, "clk_gate_vcodecbus_andgt", "clk_vcodecbus_mux", CLK_GATE_HIWORD_MASK, 0xf8, 2, 0, },
   // { HI6250_CLK_ANDGT_MMC0, "clk_andgt_mmc0", "clk_mmc0_muxpll", CLK_GATE_HIWORD_MASK, 0xf4, 2, 0, },
-  // { HI6250_CLK_ANDGT_MMC1, "clk_andgt_mmc1", "clk_sd_muxpll", CLK_GATE_HIWORD_MASK, 0xf4, 3, 0, },
   // { HI6250_CLK_ANDGT_SDIO0, "clk_andgt_sdio0", "clk_sdio0_muxpl", CLK_GATE_HIWORD_MASK, 0xf4, 4, 0, },
   // { HI6250_CLK_A53HPM_ANDGT, "clk_a53hpm_andgt", "clk_a53hpm_mux", CLK_GATE_HIWORD_MASK, 0xf4, 7, 0, },
   // { HI6250_CLK_ANDGT_UARTH, "clk_andgt_uarth", "clk_a53hpm_div", CLK_GATE_HIWORD_MASK, 0xf4, 11, 0, },
@@ -318,6 +318,9 @@ static const struct hisi_gate_clock hi6250_crgctrl_gate_clks[] = {
 static const struct hisi_gate_clock hi6250_crgctrl_gate_sep_clks[] = {
   { HI6250_HCLK_USB2OTG, "hclk_usb2otg", "clk_dbgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x40, 1, 0, },
   { HI6250_PCLK_WD0_HIGH, "pclk_wd0_high", "clk_cfgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x20, 16, 0, },
+  { HI6250_HCLK_SD, "hclk_sd", "clk_mmc1bus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x0, 30, 0, },
+  { HI6250_PCLK_GPIO17, "pclk_gpio17", "clk_cfgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x10, 17, 0, },
+  { HI6250_CLK_SD, "clk_sd", "clk_sd_muxsys", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x40, 17, 0, },
 //   { HI6250_PCLK_GPIO0, "pclk_gpio0", "clk_cfgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x10, 0, 0, },
 //   { HI6250_PCLK_GPIO1, "pclk_gpio1", "clk_cfgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x10, 1, 0, },
 //   { HI6250_PCLK_GPIO2, "pclk_gpio2", "clk_cfgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x10, 2, 0, },
@@ -335,7 +338,6 @@ static const struct hisi_gate_clock hi6250_crgctrl_gate_sep_clks[] = {
 //   { HI6250_PCLK_GPIO14, "pclk_gpio14", "clk_cfgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x10, 14, 0, },
 //   { HI6250_PCLK_GPIO15, "pclk_gpio15", "clk_cfgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x10, 15, 0, },
 //   { HI6250_PCLK_GPIO16, "pclk_gpio16", "clk_cfgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x10, 16, 0, },
-//   { HI6250_PCLK_GPIO17, "pclk_gpio17", "clk_cfgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x10, 17, 0, },
 //   { HI6250_PCLK_GPIO18, "pclk_gpio18", "clk_cfgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x10, 18, 0, },
 //   { HI6250_PCLK_GPIO19, "pclk_gpio19", "clk_cfgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x10, 19, 0, },
 //   { HI6250_PCLK_GPIO20, "pclk_gpio20", "clk_cfgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x10, 20, 0, },
@@ -354,7 +356,6 @@ static const struct hisi_gate_clock hi6250_crgctrl_gate_sep_clks[] = {
 //   { HI6250_PCLK_HKADCSSI, "pclk_hkadcssi", "clk_cfgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x20, 24, 0, },
 //   { HI6250_HCLK_EMMC0, "hclk_emmc0", "clk_mmc0bus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x0, 13, 0, },
 //   { HI6250_HCLK_SDIO0, "hclk_sdio0", "clk_mmc1bus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x0, 19, 0, },
-//   { HI6250_HCLK_SD, "hclk_sd", "clk_mmc1bus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x0, 30, 0, },
 //   { HI6250_CLK_DBGBUS, "clk_dbgbus", "clk_dbgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x0, 25, 0, },
 //   { HI6250_CLK_CSSYS_ATCLK, "clk_cssys_atclk", "clk_dbgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x128, 25, 0, },
 //   { HI6250_CLK_SECP, "clk_secp", "clk_dbgbus_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x40, 12, 0, },
@@ -371,7 +372,6 @@ static const struct hisi_gate_clock hi6250_crgctrl_gate_sep_clks[] = {
 //   { HI6250_CLK_CCI400_BP, "clk_cci400_bp", "clk_ddrc_freq", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x120, 8, 0, },
 //   { HI6250_CLK_CCI400, "clk_cci400", "clk_ddrc_freq", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x50, 14, 0, },
 //   { HI6250_CLK_EMMC0, "clk_emmc0", "clk_mmc0_muxsys", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x40, 15, 0, },
-//   { HI6250_CLK_SD, "clk_sd", "clk_sd_muxsys", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x40, 17, 0, },
 //   { HI6250_CLK_SDIO0, "clk_sdio0", "clk_sdio0_muxsy", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x40, 18, 0, },
 //   { HI6250_CLK_GPUHPM, "clk_gpuhpm", "clk_a53hpm_div", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x50, 15, 0, },
 //   { HI6250_CLK_UART1, "clk_uart1", "clkmux_uarth", CLK_SET_RATE_PARENT | CLK_IGNORE_UNUSED, 0x20, 11, 0, },
@@ -432,11 +432,12 @@ static const struct hisi_gate_clock hi6250_crgctrl_gate_sep_clks[] = {
 };
 
 
-static const struct hi6220_divider_clock hi6250_crgctrl_divider_clks[] = {
+static const struct hi6250_divider_clock hi6250_crgctrl_divider_clks[] = {
   { HI6250_CLK_CFGBUS_DIV, "clk_cfgbus_div", "clk_sysbus_div", CLK_SET_RATE_PARENT, 0xec, 0, 2, 0x30000, },
   { HI6250_CLK_DBGBUS_DIV, "clk_dbgbus_div", "clk_sysbus_div", CLK_SET_RATE_PARENT, 0xec, 12, 1, 0x10000000, },
+  { HI6250_CLK_MMC1BUS_DIV, "clk_mmc1bus_div", "clk_sysbus_div", CLK_SET_RATE_PARENT, 0xec, 3, 1, 0x80000, },
+  { HI6250_CLK_MMC1_DIV, "clk_mmc1_div", "clk_andgt_mmc1", CLK_SET_RATE_PARENT, 0xb8, 0, 4, 0xf0000, },
 //   { HI6250_CLK_MMC0BUS_DIV, "clk_mmc0bus_div", "clk_sysbus_div", CLK_SET_RATE_PARENT, 0xec, 2, 1, 0x40000, },
-//   { HI6250_CLK_MMC1BUS_DIV, "clk_mmc1bus_div", "clk_sysbus_div", CLK_SET_RATE_PARENT, 0xec, 3, 1, 0x80000, },
 //   { HI6250_CLK_TIMESTP_DIV, "clk_timestp_div", "clk_dbgbus_div", CLK_SET_RATE_PARENT, 0x128, 22, 3, 0x1c000000000, },
 //   { HI6250_CLK_PERF_DIV, "clk_perf_div", "clk_dbgbus_div", CLK_SET_RATE_PARENT, 0xd0, 14, 2, 0xc0000000, },
 //   { HI6250_PCLKDIV_DBG, "pclkdiv_dbg", "clk_cssys_div", CLK_SET_RATE_PARENT, 0x128, 0, 1, 0x10000, },
@@ -446,7 +447,6 @@ static const struct hi6220_divider_clock hi6250_crgctrl_divider_clks[] = {
 //   { HI6250_CLK_VIVOBUS_DIV, "clk_vivobus_div", "clk_gate_vivobus_andgt", CLK_SET_RATE_PARENT, 0xd0, 7, 5, 0xf800000, },
 //   { HI6250_CLK_VCODECBUS_DIV, "clk_vcodecbus_div", "clk_gate_vcodecbus_andgt", CLK_SET_RATE_PARENT, 0xd0, 0, 5, 0x1f0000, },
 //   { HI6250_CLK_MMC0_DIV, "clk_mmc0_div", "clk_andgt_mmc0", CLK_SET_RATE_PARENT, 0xb4, 3, 4, 0x780000, },
-//   { HI6250_CLK_MMC1_DIV, "clk_mmc1_div", "clk_andgt_mmc1", CLK_SET_RATE_PARENT, 0xb8, 0, 4, 0xf0000, },
 //   { HI6250_CLKDIV_SDIO0, "clkdiv_sdio0", "clk_andgt_sdio0", CLK_SET_RATE_PARENT, 0xb8, 7, 4, 0x7800000, },
 //   { HI6250_CLKDIV_UARTH, "clkdiv_uarth", "clk_andgt_uarth", CLK_SET_RATE_PARENT, 0xb0, 7, 4, 0x7800000, },
 //   { HI6250_CLKDIV_UARTL, "clkdiv_uartl", "clk_andgt_uartl", CLK_SET_RATE_PARENT, 0xb0, 11, 4, 0x78000000, },
@@ -466,13 +466,13 @@ static const struct hi6220_divider_clock hi6250_crgctrl_divider_clks[] = {
 
 
 static const char *clk_sysbus_mux_p[] = { "clk_ppll1", "clk_ppll0" };
+static const char *clk_sd_muxsys_p[] = { "clk_factor_mmc0", "clk_mmc1_div" };
+static const char *clk_sd_muxpll_p[] = { "clk_ppll0", "clk_ppll1", "clk_ppll3", "clk_ppll3" };
 // static const char *clk_wd0_mux_p[] = { "clkin_ref", "pclk_wd0_high" };
 // static const char *clk_vivobus_mux_p[] = { "clk_ap_ppll0", "clk_ppll1", "clk_ap_ppll2", "clk_ap_ppll3" };
 // static const char *clk_vcodecbus_mux_p[] = { "clk_ap_ppll0", "clk_ppll1", "clk_ap_ppll2", "clk_ap_ppll3" };
 // static const char *clk_mmc0_muxsys_p[] = { "clk_factor_mmc0", "clk_mmc0_div" };
 // static const char *clk_mmc0_muxpll_p[] = { "clk_ap_ppll0", "clk_ap_ppll3" };
-// static const char *clk_sd_muxsys_p[] = { "clk_factor_mmc0", "clk_mmc1_div" };
-// static const char *clk_sd_muxpll_p[] = { "clk_ap_ppll0", "clk_ppll1", "clk_ap_ppll3", "clk_ap_ppll3" };
 // static const char *clk_sdio0_muxsy_p[] = { "clk_factor_mmc0", "clkdiv_sdio0" };
 // static const char *clk_sdio0_muxpl_p[] = { "clk_ap_ppll0", "clk_ppll1", "clk_ap_ppll3", "clk_ap_ppll3" };
 // static const char *clk_a53hpm_mux_p[] = { "clk_ap_ppll0", "clk_ppll1" };
@@ -500,13 +500,13 @@ static const char *clk_sysbus_mux_p[] = { "clk_ppll1", "clk_ppll0" };
 
 static const struct hisi_mux_clock hi6250_crgctrl_mux_clks[] = {
   { HI6250_CLK_SYSBUS_MUX, "clk_sysbus_mux", clk_sysbus_mux_p, ARRAY_SIZE(clk_sysbus_mux_p), CLK_SET_RATE_PARENT, 0xac, 0, 1, CLK_MUX_HIWORD_MASK, },
+  { HI6250_CLK_SD_MUXSYS, "clk_sd_muxsys", clk_sd_muxsys_p, ARRAY_SIZE(clk_sd_muxsys_p), CLK_SET_RATE_PARENT, 0xb8, 6, 1, CLK_MUX_HIWORD_MASK, },
+  { HI6250_CLK_SD_MUXPLL, "clk_sd_muxpll", clk_sd_muxpll_p, ARRAY_SIZE(clk_sd_muxpll_p), CLK_SET_RATE_PARENT, 0xb8, 4, 2, CLK_MUX_HIWORD_MASK, },
   // { HI6250_CLK_WD0_MUX, "clk_wd0_mux", clk_wd0_mux_p, ARRAY_SIZE(clk_wd0_mux_p), CLK_SET_RATE_PARENT, 0x140, 17, 1, 0, },
   // { HI6250_CLK_VIVOBUS_MUX, "clk_vivobus_mux", clk_vivobus_mux_p, ARRAY_SIZE(clk_vivobus_mux_p), CLK_SET_RATE_PARENT, 0xd0, 12, 2, CLK_MUX_HIWORD_MASK, },
   // { HI6250_CLK_VCODECBUS_MUX, "clk_vcodecbus_mux", clk_vcodecbus_mux_p, ARRAY_SIZE(clk_vcodecbus_mux_p), CLK_SET_RATE_PARENT, 0xd0, 5, 2, CLK_MUX_HIWORD_MASK, },
   // { HI6250_CLK_MMC0_MUXSYS, "clk_mmc0_muxsys", clk_mmc0_muxsys_p, ARRAY_SIZE(clk_mmc0_muxsys_p), CLK_SET_RATE_PARENT, 0xb4, 2, 1, CLK_MUX_HIWORD_MASK, },
   // { HI6250_CLK_MMC0_MUXPLL, "clk_mmc0_muxpll", clk_mmc0_muxpll_p, ARRAY_SIZE(clk_mmc0_muxpll_p), CLK_SET_RATE_PARENT, 0xb4, 0, 1, CLK_MUX_HIWORD_MASK, },
-  // { HI6250_CLK_SD_MUXSYS, "clk_sd_muxsys", clk_sd_muxsys_p, ARRAY_SIZE(clk_sd_muxsys_p), CLK_SET_RATE_PARENT, 0xb8, 6, 1, CLK_MUX_HIWORD_MASK, },
-  // { HI6250_CLK_SD_MUXPLL, "clk_sd_muxpll", clk_sd_muxpll_p, ARRAY_SIZE(clk_sd_muxpll_p), CLK_SET_RATE_PARENT, 0xb8, 4, 2, CLK_MUX_HIWORD_MASK, },
   // { HI6250_CLK_SDIO0_MUXSY, "clk_sdio0_muxsy", clk_sdio0_muxsy_p, ARRAY_SIZE(clk_sdio0_muxsy_p), CLK_SET_RATE_PARENT, 0xb8, 13, 1, CLK_MUX_HIWORD_MASK, },
   // { HI6250_CLK_SDIO0_MUXPL, "clk_sdio0_muxpl", clk_sdio0_muxpl_p, ARRAY_SIZE(clk_sdio0_muxpl_p), CLK_SET_RATE_PARENT, 0xb8, 11, 2, CLK_MUX_HIWORD_MASK, },
   // { HI6250_CLK_A53HPM_MUX, "clk_a53hpm_mux", clk_a53hpm_mux_p, ARRAY_SIZE(clk_a53hpm_mux_p), CLK_SET_RATE_PARENT, 0xd4, 9, 1, CLK_MUX_HIWORD_MASK, },
@@ -547,7 +547,7 @@ static void __init hi6250_clk_crg_init(struct device_node *np)
 				ARRAY_SIZE(hi6250_crgctrl_gate_clks), clk_data_crg);
 	hisi_clk_register_gate_sep(hi6250_crgctrl_gate_sep_clks,
 				ARRAY_SIZE(hi6250_crgctrl_gate_sep_clks), clk_data_crg);
-  hi6220_clk_register_divider(hi6250_crgctrl_divider_clks,
+  hi6250_clk_register_divider(hi6250_crgctrl_divider_clks,
 				ARRAY_SIZE(hi6250_crgctrl_divider_clks), clk_data_crg);
   hisi_clk_register_mux(hi6250_crgctrl_mux_clks,
 				ARRAY_SIZE(hi6250_crgctrl_mux_clks), clk_data_crg);

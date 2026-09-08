@@ -60,8 +60,9 @@ static int hi6220_clkdiv_determine_rate(struct clk_hw *hw,
 {
 	struct hi6220_clk_divider *dclk = to_hi6220_clk_divider(hw);
 
-	return divider_determine_rate(hw, req, dclk->table, dclk->width,
-				      CLK_DIVIDER_ROUND_CLOSEST);
+	return divider_determine_rate(
+        hw, req, dclk->table, dclk->width,
+        CLK_DIVIDER_ROUND_CLOSEST);
 }
 
 static int hi6220_clkdiv_set_rate(struct clk_hw *hw, unsigned long rate,
@@ -97,9 +98,9 @@ static const struct clk_ops hi6220_clkdiv_ops = {
 	.set_rate = hi6220_clkdiv_set_rate,
 };
 
-struct clk *hi6220_register_clkdiv(struct device *dev, const char *name,
+struct clk *hi6220_register_clkdiv_mask(struct device *dev, const char *name,
 	const char *parent_name, unsigned long flags, void __iomem *reg,
-	u8 shift, u8 width, u32 mask_bit, spinlock_t *lock)
+	u8 shift, u8 width, u32 mask, spinlock_t *lock)
 {
 	struct hi6220_clk_divider *div;
 	struct clk *clk;
@@ -138,7 +139,7 @@ struct clk *hi6220_register_clkdiv(struct device *dev, const char *name,
 	div->reg = reg;
 	div->shift = shift;
 	div->width = width;
-	div->mask = mask_bit ? BIT(mask_bit) : 0;
+	div->mask = mask;
 	div->lock = lock;
 	div->hw.init = &init;
 	div->table = table;
@@ -151,4 +152,12 @@ struct clk *hi6220_register_clkdiv(struct device *dev, const char *name,
 	}
 
 	return clk;
+}
+
+struct clk *hi6220_register_clkdiv(struct device *dev, const char *name,
+	const char *parent_name, unsigned long flags, void __iomem *reg,
+	u8 shift, u8 width, u32 mask_bit, spinlock_t *lock)
+{
+	return hi6220_register_clkdiv_mask(
+		dev, name, parent_name, flags, reg, shift, width, mask_bit ? BIT(mask_bit) : 0, lock);
 }
