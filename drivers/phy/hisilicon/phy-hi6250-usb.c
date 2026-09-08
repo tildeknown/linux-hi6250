@@ -11,19 +11,7 @@
 #include <linux/regmap.h>
 #include <linux/gpio/consumer.h>
 #include <linux/clk.h>
-
-#define PERI_CRG_RSTEN4				(0x90)
-#define PERI_CRG_RSTDIS4			(0x94)
-#define PERI_CRG_CLK_EN4			(0x40)
-#define PERI_CRG_CLK_DIS4			(0x44)
-#define BIT_RST_USB2OTG				(1<<9)
-#define BIT_RST_USB2OTGPHY			(1<<12)
-#define BIT_RST_USB2OTGPHYPOR			(1<<13)
-#define BIT_RST_USB2OTG_ADP			(1<<27)
-#define BIT_RST_USB2OTG_32K			(1<<14)
-#define BIT_RST_USB2OTG_MUX			(1<<10)
-#define BIT_RST_USB2OTG_AHBIF			(1<<11)
-#define BIT_HCLK_USB2OTG			(1 << 1)
+#include <linux/reset.h>
 
 #define USB_AHBIF_CTRL0 0
 #define USB_AHBIF_CTRL2 0x08
@@ -38,16 +26,20 @@
 #define BIT_AHBIF_CTRL2_VBUSVALIDEXT (1<<2)
 #define BIT_AHBIF_CTRL2_VBUSVLDEXTSEL (1<<3)
 
+#define PCTRL_PERI_CTRL24	0x64
 #define BIT_PCTRL_ABB_MUX_MASK (7<<24)
 #define BIT_PCTRL_ABB_MUX (5<<24)
 
-#define PCTRL_PERI_CTRL24	0x64
 #define PMU_ABB_192_OFFSET	0x43c
 
 struct hi6250_priv {
 	struct device *dev;
 	enum phy_mode mode;
-	struct regmap *pericrg;
+	struct reset_control *rst_hclk;
+	struct reset_control *rst_ahbif;
+	struct reset_control *rst_phy;
+	struct reset_control *rst_phy_clk;
+	struct reset_control *rst_phy_hclk;
 	struct regmap *pctrl;
 	struct regmap *ahbif;
 	struct gpio_desc *mode_gpio;
@@ -57,13 +49,13 @@ struct hi6250_priv {
 
 static int hi6250_phy_power_on(struct hi6250_priv *priv)
 {
-	struct regmap *pericrg = priv->pericrg; /* pericrg regmap */
 	struct regmap *pctrl = priv->pctrl; /* pctrl regmap */
 	struct regmap *ahbif = priv->ahbif; /* usb ahbif base regmap */
 	u32 val, mask;
 	int ret;
 
-	bool is_host_mode = priv->mode == PHY_MODE_USB_HOST; /* TODO: remove this stinkiness */
+/* TODO: remove this stinkiness */
+	bool is_host_mode = priv->mode == PHY_MODE_USB_HOST;
 
 	/* configure abb clock with pctrl */
 	mask = BIT_PCTRL_ABB_MUX_MASK;
@@ -74,17 +66,12 @@ static int hi6250_phy_power_on(struct hi6250_priv *priv)
 	/* set gpio_21[2] = is_host_mode, 0:device mode, 1:host mode */
 	gpiod_set_value(priv->mode_gpio, is_host_mode);
 	
-	ret = regmap_write(pericrg, PERI_CRG_CLK_EN4, BIT_HCLK_USB2OTG);
+	ret = reset_control_assert(priv->rst_hclk);
 	if (ret) goto out;
-	
 	udelay(100);
 
 	/* unreset usb ahbif */
-	ret = regmap_write(pericrg, PERI_CRG_RSTDIS4,
-	  BIT_RST_USB2OTG_ADP |
-	  BIT_RST_USB2OTG_32K |
-	  BIT_RST_USB2OTG_MUX |
-	  BIT_RST_USB2OTG_AHBIF);
+	ret = reset_control_deassert(priv->rst_ahbif);
 	if (ret) goto out;
 	udelay(100);
 
@@ -101,25 +88,26 @@ static int hi6250_phy_power_on(struct hi6250_priv *priv)
 	/* write eye pattern */
 	ret = regmap_write(ahbif, USB_AHBIF_CTRL3,
 	  is_host_mode ? priv->host_eyepattern : priv->eyepattern);
+	// ret = regmap_write(ahbif, USB_AHBIF_CTRL3, priv->eyepattern);
 	if (ret) goto out;
 	dev_info(priv->dev, "usb ahbif eye pattern setup\n");
 
 	/* unreset phy */
-	ret = regmap_write(pericrg, PERI_CRG_RSTDIS4, BIT_RST_USB2OTGPHYPOR);
+	ret = reset_control_deassert(priv->rst_phy);
 	if (ret) goto out;
 
 	/* delay 50us */
 	udelay(50);
 
 	/* unreset phy clk domain */
-	ret = regmap_write(pericrg, PERI_CRG_RSTDIS4, BIT_RST_USB2OTGPHY);
+	ret = reset_control_deassert(priv->rst_phy_clk);
 	if (ret) goto out;
 
 	/* delay 100us */
 	udelay(100);
 
 	/* unreset hclk domain */
-	ret = regmap_write(pericrg, PERI_CRG_RSTDIS4, BIT_RST_USB2OTG);
+	ret = reset_control_deassert(priv->rst_phy_hclk);
 	if (ret) goto out;
 
 	/* enable vbusvalidext & vbusvldextsel */
@@ -141,26 +129,23 @@ out:
 	
 static int hi6250_phy_power_off(struct hi6250_priv *priv)
 {
-	struct regmap *pericrg = priv->pericrg; /* pericrg regmap */
 	int ret;
 
 	/* reset controller */
-	ret = regmap_write(pericrg, PERI_CRG_RSTEN4, BIT_RST_USB2OTG);
+	ret = reset_control_assert(priv->rst_phy_hclk);
 	if (ret) goto out;
 	udelay(1);
 
 	/* reset phy */
-	ret = regmap_write(pericrg, PERI_CRG_RSTEN4, BIT_RST_USB2OTGPHY);
+	ret = reset_control_assert(priv->rst_phy_clk);
 	if (ret) goto out;
-	ret = regmap_write(pericrg, PERI_CRG_RSTEN4, BIT_RST_USB2OTGPHYPOR);
+	ret = reset_control_assert(priv->rst_phy);
 	if (ret) goto out;
 
 	/* reset usb ahbif */
-	ret = regmap_write(pericrg, PERI_CRG_RSTEN4,
-	                   BIT_RST_USB2OTG_ADP | BIT_RST_USB2OTG_32K | BIT_RST_USB2OTG_MUX |
-	                   BIT_RST_USB2OTG_AHBIF);
+	ret = reset_control_assert(priv->rst_ahbif);
 	if (ret) goto out;
-	ret = regmap_write(pericrg, PERI_CRG_CLK_DIS4, BIT_HCLK_USB2OTG);
+	ret = reset_control_deassert(priv->rst_hclk);
 	if (ret) goto out;
 	
 	msleep(1);
@@ -171,10 +156,6 @@ static int hi6250_phy_power_off(struct hi6250_priv *priv)
 out:
 	dev_err(priv->dev, "failed to setup phy ret: %d\n", ret);
 	return ret;
-}
-
-static void hi6250_phy_init(struct hi6250_priv *priv)
-{
 }
 
 static int hi6250_phy_start(struct phy *phy)
@@ -192,9 +173,8 @@ static int hi6250_phy_exit(struct phy *phy)
 static int hi6250_phy_set_mode(struct phy *phy, enum phy_mode mode, int submode)
 {
 	struct hi6250_priv *priv = phy_get_drvdata(phy);
-	
 	priv->mode = mode;
-	return 0;		
+	return 0;
 }
 
 static const struct phy_ops hi6250_phy_ops = {
@@ -216,12 +196,6 @@ static int hi6250_phy_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	priv->dev = dev;
-	priv->pericrg = syscon_regmap_lookup_by_phandle(dev->of_node,
-					"hisilicon,pericrg-syscon");
-	if (IS_ERR(priv->pericrg)) {
-		dev_err(dev, "no hisilicon,pericrg-syscon\n");
-		return PTR_ERR(priv->pericrg);
-	}
 	priv->pctrl = syscon_regmap_lookup_by_phandle(dev->of_node,
 					"hisilicon,pctrl-syscon");
 	if (IS_ERR(priv->pctrl)) {
@@ -242,9 +216,36 @@ static int hi6250_phy_probe(struct platform_device *pdev)
 	priv->mode_gpio = devm_gpiod_get_optional(dev, "mode", GPIOD_OUT_LOW);
 	if (IS_ERR(priv->mode_gpio))
     return PTR_ERR(priv->mode_gpio);
-  
-	hi6250_phy_init(priv);
 
+	priv->rst_ahbif = devm_reset_control_get_exclusive(dev, "ahbif");
+	if (IS_ERR(priv->rst_ahbif))
+    return dev_err_probe(dev, PTR_ERR(priv->rst_ahbif),
+                         "failed to get ahbif reset\n");
+
+	priv->rst_phy =
+    devm_reset_control_get_exclusive(dev, "phy");
+	if (IS_ERR(priv->rst_phy))
+    return dev_err_probe(dev, PTR_ERR(priv->rst_phy),
+                         "failed to get phy reset\n");
+
+	priv->rst_phy_clk =
+    devm_reset_control_get_exclusive(dev, "phy_clk");
+	if (IS_ERR(priv->rst_phy_clk))
+    return dev_err_probe(dev, PTR_ERR(priv->rst_phy_clk),
+                         "failed to get phy_clk reset\n");
+
+	priv->rst_phy_hclk =
+    devm_reset_control_get_exclusive(dev, "phy_hclk");
+	if (IS_ERR(priv->rst_phy_hclk))
+    return dev_err_probe(dev, PTR_ERR(priv->rst_phy_hclk),
+                         "failed to get phy_hclk reset\n");
+  
+	priv->rst_hclk =
+    devm_reset_control_get_exclusive(dev, "hclk");
+	if (IS_ERR(priv->rst_hclk))
+    return dev_err_probe(dev, PTR_ERR(priv->rst_hclk),
+                         "failed to get hclk reset\n");
+  
 	phy = devm_phy_create(dev, NULL, &hi6250_phy_ops);
 	if (IS_ERR(phy))
 		return PTR_ERR(phy);
