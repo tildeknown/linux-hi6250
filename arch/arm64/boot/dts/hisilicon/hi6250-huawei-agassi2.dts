@@ -10,14 +10,14 @@
 #include "hi6250.dtsi"
 
 / {
-	model = "Huawei Mediapad T5";
+	model = "Huawei MediaPad T5";
 	compatible = "huawei,agassi2", "hisilicon,hi6250";
 	chassis-type = "handset";
 
 	aliases {
-
+		mshc1 = &dwmmc1;
 	};
-
+	
 	chosen {
 		bootargs = "earlycon=tty0 console=tty0";
 
@@ -61,14 +61,225 @@
 	};
 
 	soc {
+		pmic: pmic@fff34000 {
+			compatible = "hisilicon,hi6421v530-pmic";
+			reg = <0x0 0xfff34000 0x0 0x1000>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
 
+			regulators {
+				ldo9: LDO9 {
+					regulator-name = "VOUT9_1V8_2V95";
+					regulator-min-microvolt = <1750000>;
+					regulator-max-microvolt = <3300000>;
+					regulator-enable-ramp-delay = <360>;
+				};
+
+				ldo16: LDO16 {
+					regulator-name = "VOUT16_2V95";
+					regulator-min-microvolt = <1750000>;
+					regulator-max-microvolt = <3000000>;
+					regulator-enable-ramp-delay = <360>;
+				};
+			};
+		};
+	};
+};
+
+&usb_phy {
+	status = "ok";
+	hisilicon,eye-pattern = <0x059066DB>;
+	hisilicon,host-eye-pattern = <0x059066DB>;
+};
+
+&usb {
+	status = "ok";
+};
+
+&pmx0 {
+	status = "ok";
+	// dwmmc1_pmx_func: dwmmc1-pmx-func {
+	// 	pinctrl-single,pins = <
+	// 		0x098 MUX_M1
+	// 		0x09C MUX_M1
+	// 		0x0A0 MUX_M1
+	// 		0x0A4 MUX_M1
+	// 		0x0A8 MUX_M1
+	// 		0x0AC MUX_M1
+	// 	>;
+	// };
+
+	gpio041_pmx_func: gpio041_pmx_func {
+		pinctrl-single,pins = <0x098    0x1>;
+	};
+	gpio041_pmx_idle: gpio041_pmx_idle {
+		pinctrl-single,pins = <0x098    0x0>;
+	};
+
+	gpio042_pmx_func: gpio042_pmx_func {
+		pinctrl-single,pins = <0x09C    0x1>;
+	};
+	gpio042_pmx_idle: gpio042_pmx_idle {
+		pinctrl-single,pins = <0x09C    0x0>;
+	};
+
+	gpio043_pmx_func: gpio043_pmx_func {
+		pinctrl-single,pins = <0x0A0    0x1>;
+	};
+	gpio043_pmx_idle: gpio043_pmx_idle {
+		pinctrl-single,pins = <0x0A0    0x0>;
+	};
+
+	gpio044_pmx_func: gpio044_pmx_func {
+		pinctrl-single,pins = <0x0A4    0x1>;
+	};
+	gpio044_pmx_idle: gpio044_pmx_idle {
+		pinctrl-single,pins = <0x0A4    0x0>;
+	};
+
+	gpio045_pmx_func: gpio045_pmx_func {
+		pinctrl-single,pins = <0x0A8    0x1>;
+	};
+	gpio045_pmx_idle: gpio045_pmx_idle {
+		pinctrl-single,pins = <0x0A8    0x0>;
+	};
+
+	gpio046_pmx_func: gpio046_pmx_func {
+		pinctrl-single,pins = <0x0AC    0x1>;
+	};
+	gpio046_pmx_idle: gpio046_pmx_idle {
+		pinctrl-single,pins = <0x0AC    0x0>;
 	};
 };
 
 &pmx2 {
 	status = "ok";
+	// dwmmc1_0_cfg_func: dwmmc1_0_cfg_func {
+	// 	pinctrl-single,pins = <0x0A4  0>;
+	// 	pinctrl-single,bias-pulldown = <0 2 0 2>;
+	// 	pinctrl-single,bias-pullup = <0 1 0 1>;
+	// 	pinctrl-single,drive-strength = <0xA0 0xF0>;
+	// };
+	// dwmmc1_1_cfg_func: dwmmc1_1_cfg_func {
+	// 	pinctrl-single,pins = <
+	// 		0x0A8  0
+	// 		0x0AC  0
+	// 		0x0B0  0
+	// 		0x0B4  0
+	// 		0x0B8  0
+	// 	>;
+	// 	pinctrl-single,bias-pulldown = <0 2 0 2>;
+	// 	pinctrl-single,bias-pullup = <1 1 0 1>;
+	// 	pinctrl-single,drive-strength = <0x40 0xF0>;
+	// };
+	
+	gpio041_cfg_func: gpio041_cfg_func {
+		pinctrl-single,pins = <0x0A4  0>;
+		pinctrl-single,bias-pulldown = <0 2 0 2>;
+		pinctrl-single,bias-pullup = <0 1 0 1>;
+		pinctrl-single,drive-strength = <0xA0 0xF0>;
+	};
+	gpio041_cfg_idle: gpio041_cfg_idle {
+		pinctrl-single,pins = <0x0A4  0>;
+		pinctrl-single,bias-pulldown = <0 2 0 2>;
+		pinctrl-single,bias-pullup = <0 1 0 1>;
+		pinctrl-single,drive-strength = <0x00 0x70>;
+		pinctrl-single,slew-rate = <0x0 0x80>;
+	};
+
+	gpio042_cfg_func: gpio042_cfg_func {
+		pinctrl-single,pins = <0x0A8  0>;
+		pinctrl-single,bias-pulldown = <0 2 0 2>;
+		pinctrl-single,bias-pullup = <1 1 0 1>;
+		pinctrl-single,drive-strength = <0x40 0xF0>;
+	};
+	gpio042_cfg_idle: gpio042_cfg_idle {
+		pinctrl-single,pins = <0x0A8  0>;
+		pinctrl-single,bias-pulldown = <0 2 0 2>;
+		pinctrl-single,bias-pullup = <0 1 0 1>;
+		pinctrl-single,drive-strength = <0x00 0x70>;
+		pinctrl-single,slew-rate = <0x0 0x80>;
+	};
+
+	gpio043_cfg_func: gpio043_cfg_func {
+		pinctrl-single,pins = <0x0AC  0>;
+		pinctrl-single,bias-pulldown = <0 2 0 2>;
+		pinctrl-single,bias-pullup = <1 1 0 1>;
+		pinctrl-single,drive-strength = <0x40 0xF0>;
+	};
+	gpio043_cfg_idle: gpio043_cfg_idle {
+		pinctrl-single,pins = <0x0AC  0>;
+		pinctrl-single,bias-pulldown = <0 2 0 2>;
+		pinctrl-single,bias-pullup = <0 1 0 1>;
+		pinctrl-single,drive-strength = <0x00 0x70>;
+		pinctrl-single,slew-rate = <0x0 0x80>;
+	};
+
+	gpio044_cfg_func: gpio044_cfg_func {
+		pinctrl-single,pins = <0x0B0  0>;
+		pinctrl-single,bias-pulldown = <0 2 0 2>;
+		pinctrl-single,bias-pullup = <1 1 0 1>;
+		pinctrl-single,drive-strength = <0x40 0xF0>;
+	};
+	gpio044_cfg_idle: gpio044_cfg_idle {
+		pinctrl-single,pins = <0x0B0  0>;
+		pinctrl-single,bias-pulldown = <0 2 0 2>;
+		pinctrl-single,bias-pullup = <0 1 0 1>;
+		pinctrl-single,drive-strength = <0x00 0x70>;
+		pinctrl-single,slew-rate = <0x0 0x80>;
+	};
+
+	gpio045_cfg_func: gpio045_cfg_func {
+		pinctrl-single,pins = <0x0B4  0>;
+		pinctrl-single,bias-pulldown = <0 2 0 2>;
+		pinctrl-single,bias-pullup = <1 1 0 1>;
+		pinctrl-single,drive-strength = <0x40 0xF0>;
+	};
+	gpio045_cfg_idle: gpio045_cfg_idle {
+		pinctrl-single,pins = <0x0B4  0>;
+		pinctrl-single,bias-pulldown = <0 2 0 2>;
+		pinctrl-single,bias-pullup = <0 1 0 1>;
+		pinctrl-single,drive-strength = <0x00 0x70>;
+		pinctrl-single,slew-rate = <0x0 0x80>;
+	};
+
+	gpio046_cfg_func: gpio046_cfg_func {
+		pinctrl-single,pins = <0x0B8  0>;
+		pinctrl-single,bias-pulldown = <0 2 0 2>;
+		pinctrl-single,bias-pullup = <1 1 0 1>;
+		pinctrl-single,drive-strength = <0x40 0xF0>;
+	};
+	gpio046_cfg_idle: gpio046_cfg_idle {
+		pinctrl-single,pins = <0x0B8  0>;
+		pinctrl-single,bias-pulldown = <0 2 0 2>;
+		pinctrl-single,bias-pullup = <0 1 0 1>;
+		pinctrl-single,drive-strength = <0x00 0x70>;
+		pinctrl-single,slew-rate = <0x0 0x80>;
+	};
 };
 
-&pmx3 {
+&dwmmc1 {
 	status = "ok";
+	clock-frequency = <3200000>;
+	bus-width = <0x4>;
+	cap-sd-highspeed;
+	sd-uhs-sdr12;
+	sd-uhs-sdr25;
+	sd-uhs-sdr50;
+	sd-uhs-sdr104;
+	disable-wp;
+	cd-gpios = <&gpio25 3 GPIO_ACTIVE_HIGH>;
+	vmmc-supply = <&ldo16>;
+	vqmmc-supply = <&ldo9>;
+	// pinctrl-names = "default";
+	// pinctrl-0 = <&dwmmc1_pmx_func &dwmmc1_0_cfg_func &dwmmc1_1_cfg_func>;
+	pinctrl-names = "default", "idle";
+	pinctrl-0 = <&gpio041_pmx_func &gpio042_pmx_func &gpio043_pmx_func
+			&gpio044_pmx_func &gpio045_pmx_func &gpio046_pmx_func
+			&gpio041_cfg_func &gpio042_cfg_func &gpio043_cfg_func
+			&gpio044_cfg_func &gpio045_cfg_func &gpio046_cfg_func>;
+	pinctrl-1 = <&gpio041_pmx_idle &gpio042_pmx_idle &gpio043_pmx_idle
+			&gpio044_pmx_idle &gpio045_pmx_idle &gpio046_pmx_idle
+			&gpio041_cfg_idle &gpio042_cfg_idle &gpio043_cfg_idle
+			&gpio044_cfg_idle &gpio045_cfg_idle &gpio046_cfg_idle>;
 };
