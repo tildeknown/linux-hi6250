@@ -99,6 +99,34 @@ static struct hs_timing hs_timing_cfg[TIMING_MODE][TIMING_CFG_NUM] = {
 	}
 };
 
+static struct hs_timing hs_timing_cfg_hi6250[TIMING_MODE][TIMING_CFG_NUM] = {
+	{},
+	{ /*SD*/
+		{7, 0, 15, 15, }, /* 0: LEGACY 400k */
+		{0},					    /* 1: MMC_HS */
+		{6, 0,  2,  2, }, /* 2: SD_HS */
+		{6, 0, 15, 15, },	/* 3: SDR12 */
+		{6, 0,  1,  1, },	/* 4: SDR25 */
+		{3, 0, 12,  0, },	/* 5: SDR50 */
+		{5, 4, 15,  0, },	/* 6: SDR104 */
+		{0},					    /* 7: DDR50 */
+		{0},					    /* 8: DDR52 */
+		{0},					    /* 9: HS200 */
+	},
+	{ /*SDIO*/
+		{7, 0, 15, 15, },	/* 0: LEGACY 400k */
+		{0},					    /* 1: MMC_HS */
+		{6, 0, 15, 15, },	/* 2: SD_HS */
+		{6, 0, 15, 15, },	/* 3: SDR12 */
+		{6, 0,  0,  0, },	/* 4: SDR25 */
+		{5, 0, 12,  0, },	/* 5: SDR50 */
+		{5, 4, 15,  0, },	/* 6: SDR104 */
+		{0},					    /* 7: DDR50 */
+		{0},					    /* 8: DDR52 */
+		{0},					    /* 9: HS200 */
+	}
+};
+
 static void dw_mci_k3_set_ios(struct dw_mci *host, struct mmc_ios *ios)
 {
 	int ret;
@@ -214,7 +242,7 @@ static const struct dw_mci_drv_data hi6220_data = {
 };
 
 static void dw_mci_hs_set_timing(struct dw_mci *host, int timing,
-				     int smpl_phase)
+				     int smpl_phase, struct hs_timing (*timings)[TIMING_CFG_NUM])
 {
 	u32 drv_phase;
 	u32 smpl_dly;
@@ -227,11 +255,11 @@ static void dw_mci_hs_set_timing(struct dw_mci *host, int timing,
 	priv = host->priv;
 	ctrl_id = priv->ctrl_id;
 
-	drv_phase = hs_timing_cfg[ctrl_id][timing].drv_phase;
-	smpl_dly   = hs_timing_cfg[ctrl_id][timing].smpl_dly;
+	drv_phase = timings[ctrl_id][timing].drv_phase;
+	smpl_dly   = timings[ctrl_id][timing].smpl_dly;
 	if (smpl_phase == -1)
-		smpl_phase = (hs_timing_cfg[ctrl_id][timing].smpl_phase_max +
-			     hs_timing_cfg[ctrl_id][timing].smpl_phase_min) / 2;
+		smpl_phase = (timings[ctrl_id][timing].smpl_phase_max +
+			     timings[ctrl_id][timing].smpl_phase_min) / 2;
 
 	switch (timing) {
 	case MMC_TIMING_UHS_SDR104:
@@ -264,12 +292,13 @@ static void dw_mci_hs_set_timing(struct dw_mci *host, int timing,
 	usleep_range(1000, 2000);
 }
 
+
 static int dw_mci_hi3660_init(struct dw_mci *host)
 {
 	mci_writel(host, CDTHRCTL, SDMMC_SET_THLD(SDCARD_RD_THRESHOLD,
 		    SDMMC_CARD_RD_THR_EN));
 
-	dw_mci_hs_set_timing(host, MMC_TIMING_LEGACY, -1);
+	dw_mci_hs_set_timing(host, MMC_TIMING_LEGACY, -1, hs_timing_cfg);
 	host->bus_hz /= (GENCLK_DIV + 1);
 
 	return 0;
@@ -312,7 +341,7 @@ static void dw_mci_hi3660_set_ios(struct dw_mci *host, struct mmc_ios *ios)
 	}
 	actual = clk_get_rate(host->ciu_clk);
 
-	dw_mci_hs_set_timing(host, ios->timing, -1);
+	dw_mci_hs_set_timing(host, ios->timing, -1, hs_timing_cfg);
 	host->bus_hz = actual / (GENCLK_DIV + 1);
 	host->current_speed = 0;
 	priv->cur_speed = host->bus_hz;
@@ -377,7 +406,7 @@ static int dw_mci_hi3660_execute_tuning(struct dw_mci_slot *slot, u32 opcode)
 		smpl_phase %= 32;
 
 		mci_writel(host, TMOUT, ~0);
-		dw_mci_hs_set_timing(host, mmc->ios.timing, smpl_phase);
+		dw_mci_hs_set_timing(host, mmc->ios.timing, smpl_phase, hs_timing_cfg);
 
 		if (!mmc_send_tuning(mmc, opcode, NULL))
 			tuning_sample_flag |= (1 << smpl_phase);
@@ -391,7 +420,7 @@ static int dw_mci_hi3660_execute_tuning(struct dw_mci_slot *slot, u32 opcode)
 		return -EIO;
 	}
 
-	dw_mci_hs_set_timing(host, mmc->ios.timing, best_clksmpl);
+	dw_mci_hs_set_timing(host, mmc->ios.timing, best_clksmpl, hs_timing_cfg);
 
 	dev_info(host->dev, "tuning ok best_clksmpl %u tuning_sample_flag %x\n",
 		 best_clksmpl, tuning_sample_flag);
@@ -433,6 +462,109 @@ static int dw_mci_hi3660_switch_voltage(struct mmc_host *mmc,
 	return 0;
 }
 
+static void dw_mci_hi6250_set_ios(struct dw_mci *host, struct mmc_ios *ios)
+{
+	int ret;
+	unsigned long wanted;
+	unsigned long actual;
+	struct k3_priv *priv = host->priv;
+
+	if (!ios->clock || ios->clock == priv->cur_speed)
+		return;
+
+	wanted = ios->clock * (GENCLK_DIV + 1);
+	ret = clk_set_rate(host->ciu_clk, wanted);
+	if (ret) {
+		dev_err(host->dev, "failed to set rate %luHz\n", wanted);
+		return;
+	}
+	actual = clk_get_rate(host->ciu_clk);
+
+	dw_mci_hs_set_timing(host, ios->timing, -1, hs_timing_cfg_hi6250);
+	host->bus_hz = actual / (GENCLK_DIV + 1);
+	host->current_speed = 0;
+	priv->cur_speed = host->bus_hz;
+}
+
+
+static int dw_mci_hi6250_execute_tuning(struct dw_mci_slot *slot, u32 opcode)
+{
+	int i = 0;
+	struct dw_mci *host = slot->host;
+	struct mmc_host *mmc = slot->mmc;
+	int smpl_phase = 0;
+	u32 tuning_sample_flag = 0;
+	int best_clksmpl = 0;
+
+	for (i = 0; i < NUM_PHASES; ++i, ++smpl_phase) {
+		smpl_phase %= 32;
+
+		mci_writel(host, TMOUT, ~0);
+		dw_mci_hs_set_timing(host, mmc->ios.timing, smpl_phase, hs_timing_cfg_hi6250);
+
+		if (!mmc_send_tuning(mmc, opcode, NULL))
+			tuning_sample_flag |= (1 << smpl_phase);
+		else
+			tuning_sample_flag &= ~(1 << smpl_phase);
+	}
+
+	best_clksmpl = dw_mci_get_best_clksmpl(tuning_sample_flag);
+	if (best_clksmpl < 0) {
+		dev_err(host->dev, "All phases bad!\n");
+		return -EIO;
+	}
+
+	dw_mci_hs_set_timing(host, mmc->ios.timing, best_clksmpl, hs_timing_cfg_hi6250);
+
+	dev_info(host->dev, "tuning ok best_clksmpl %u tuning_sample_flag %x\n",
+		 best_clksmpl, tuning_sample_flag);
+	return 0;
+}
+
+
+static int dw_mci_hi6250_switch_voltage(struct mmc_host *mmc,
+					struct mmc_ios *ios)
+{
+	int ret = 0;
+	struct dw_mci_slot *slot = mmc_priv(mmc);
+	struct k3_priv *priv;
+	struct dw_mci *host;
+
+	host = slot->host;
+	priv = host->priv;
+
+	if (!priv || !priv->reg)
+		return 0;
+
+	if (priv->ctrl_id == DWMMC_SDIO_ID)
+		return 0;
+
+	if (ios->signal_voltage == MMC_SIGNAL_VOLTAGE_330)
+		ret = dw_mci_set_sel18(host, 0);
+	else if (ios->signal_voltage == MMC_SIGNAL_VOLTAGE_180)
+		ret = dw_mci_set_sel18(host, 1);
+	if (ret)
+		return ret;
+
+	if (!IS_ERR(mmc->supply.vqmmc)) {
+		ret = mmc_regulator_set_vqmmc(mmc, ios);
+		if (ret < 0) {
+			dev_err(host->dev, "Regulator set error %d\n", ret);
+			return ret;
+		}
+	}
+
+	return 0;
+}
+
+static const struct dw_mci_drv_data hi6250_data = {
+	.init = dw_mci_hi3660_init,
+	.set_ios = dw_mci_hi6250_set_ios,
+	.parse_dt = dw_mci_hi6220_parse_dt,
+	.execute_tuning = dw_mci_hi6250_execute_tuning,
+	.switch_voltage  = dw_mci_hi6250_switch_voltage,
+};
+
 static const struct dw_mci_drv_data hi3660_data = {
 	.init = dw_mci_hi3660_init,
 	.set_ios = dw_mci_hi3660_set_ios,
@@ -445,6 +577,7 @@ static const struct of_device_id dw_mci_k3_match[] = {
 	{ .compatible = "hisilicon,hi3660-dw-mshc", .data = &hi3660_data, },
 	{ .compatible = "hisilicon,hi4511-dw-mshc", .data = &k3_drv_data, },
 	{ .compatible = "hisilicon,hi6220-dw-mshc", .data = &hi6220_data, },
+	{ .compatible = "hisilicon,hi6250-dw-mshc", .data = &hi6250_data, },
 	{},
 };
 MODULE_DEVICE_TABLE(of, dw_mci_k3_match);
